@@ -1,0 +1,23 @@
+#!/bin/bash
+# wrapper to call riscv64 toolchain to produce rv32 output via -march/-mabi
+ARGS=("$@")
+# If the caller already provided -march or -mabi, don't override
+has_march=0
+has_mabi=0
+for a in "${ARGS[@]}"; do
+	case "$a" in
+		-march=*|-march) has_march=1; break;;
+	esac
+done
+for a in "${ARGS[@]}"; do
+	case "$a" in
+		-mabi=*|-mabi) has_mabi=1; break;;
+	esac
+done
+if [ $has_march -eq 0 ]; then
+	ARGS=("-march=rv32imac" "${ARGS[@]}")
+fi
+if [ $has_mabi -eq 0 ]; then
+	ARGS=("-mabi=ilp32" "${ARGS[@]}")
+fi
+exec /usr/bin/riscv64-unknown-elf-gcc "${ARGS[@]}"

@@ -16,6 +16,10 @@ class SoCWithDotProduct(ColorlightBaseSoC):
         kwargs.setdefault("uart_name", "serial")
         kwargs.setdefault("integrated_rom_size", 0x8000)
         kwargs.setdefault("integrated_main_ram_size", 0x10000)
+        # Evite dependências desnecessárias no BIOS durante geração de headers
+        kwargs.setdefault("with_timer", False)
+        # Disable LED chaser by default to avoid CSR name-extraction issues in some environments
+        kwargs.setdefault("with_led_chaser", False)
 
         super().__init__(*args, **kwargs)
 
@@ -23,6 +27,8 @@ class SoCWithDotProduct(ColorlightBaseSoC):
         self.dotp = DotProductAccel(self.platform, sys_clk_freq=int(kwargs.get("sys_clk_freq", 60e6)))
         # Adiciona CSR para o periférico
         self.add_csr("dotp")
+
+    # Timer opcional: omitido aqui para facilitar geração de headers sem BIOS
 
 
 def main():
@@ -33,11 +39,22 @@ def main():
     parser.add_target_argument("--sys-clk-freq", default=60e6, type=float)
     parser.add_target_argument("--build", action="store_true")
     parser.add_target_argument("--load", action="store_true")
+    # Gera apenas headers/CSRs e artefatos de software, sem sintetizar gateware
+    parser.add_argument("--headers-only", action="store_true", help="Gerar apenas headers/CSRs (sem build de gateware)")
     args = parser.parse_args()
 
     soc = SoCWithDotProduct(board=args.board, revision=args.revision, sys_clk_freq=args.sys_clk_freq, **parser.soc_argdict)
-    builder = Builder(soc, output_dir="build/dotp", csr_csv="build/dotp/csr.csv")
-    builder.build(run=args.build, load=args.load)
+    if args.headers_only:
+        builder = Builder(soc, output_dir="build/dotp", csr_csv="build/dotp/csr.csv",
+                          compile_software=False, compile_gateware=False)
+        # Finaliza o SoC e gera headers/CSRs diretamente, sem gateware/BIOS
+        soc.finalize()
+        builder._generate_includes(with_bios=False)
+        builder._generate_csr_map()
+        return
+    else:
+        builder = Builder(soc, output_dir="build/dotp", csr_csv="build/dotp/csr.csv")
+        builder.build(run=args.build, load=args.load)
 
 if __name__ == "__main__":
     main()

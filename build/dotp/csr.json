@@ -1,0 +1,153 @@
+{
+    "csr_bases": {
+        "dotp": 4026531840,
+        "identifier_mem": 4026533888
+    },
+    "csr_registers": {
+        "dotp_a0": {
+            "addr": 4026531840,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_a1": {
+            "addr": 4026531844,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_a2": {
+            "addr": 4026531848,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_a3": {
+            "addr": 4026531852,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_a4": {
+            "addr": 4026531856,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_a5": {
+            "addr": 4026531860,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_a6": {
+            "addr": 4026531864,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_a7": {
+            "addr": 4026531868,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_b0": {
+            "addr": 4026531872,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_b1": {
+            "addr": 4026531876,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_b2": {
+            "addr": 4026531880,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_b3": {
+            "addr": 4026531884,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_b4": {
+            "addr": 4026531888,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_b5": {
+            "addr": 4026531892,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_b6": {
+            "addr": 4026531896,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_b7": {
+            "addr": 4026531900,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_start": {
+            "addr": 4026531904,
+            "size": 1,
+            "type": "rw"
+        },
+        "dotp_done": {
+            "addr": 4026531908,
+            "size": 1,
+            "type": "ro"
+        },
+        "dotp_result_lo": {
+            "addr": 4026531912,
+            "size": 1,
+            "type": "ro"
+        },
+        "dotp_result_hi": {
+            "addr": 4026531916,
+            "size": 1,
+            "type": "ro"
+        }
+    },
+    "constants": {
+        "config_platform_name": "colorlight_i5",
+        "config_clock_frequency": 60000000,
+        "config_cpu_has_interrupt": null,
+        "config_cpu_reset_addr": 0,
+        "config_cpu_has_dcache": null,
+        "config_cpu_has_icache": null,
+        "config_cpu_type_vexriscv": null,
+        "config_cpu_variant_standard": null,
+        "config_cpu_family": "riscv",
+        "config_cpu_name": "vexriscv",
+        "config_cpu_human_name": "vexriscv",
+        "config_cpu_nop": "nop",
+        "config_bios_no_build_time": null,
+        "config_identifier": "litex soc on colorlight i5",
+        "config_csr_data_width": 32,
+        "config_csr_alignment": 32,
+        "config_bus_standard": "wishbone",
+        "config_bus_data_width": 32,
+        "config_bus_address_width": 32,
+        "config_bus_bursting": 0,
+        "config_cpu_interrupts": 0
+    },
+    "memories": {
+        "rom": {
+            "base": 0,
+            "size": 32768,
+            "type": "cached"
+        },
+        "sram": {
+            "base": 268435456,
+            "size": 8192,
+            "type": "cached"
+        },
+        "main_ram": {
+            "base": 1073741824,
+            "size": 65536,
+            "type": "cached"
+        },
+        "csr": {
+            "base": 4026531840,
+            "size": 65536,
+            "type": "io"
+        }
+    }
+}
