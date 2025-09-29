@@ -3,7 +3,7 @@
 
 from migen import *
 from litex.gen import LiteXModule
-from litex.soc.interconnect.csr import CSRStorage, CSRStatus, CSRField
+from litex.soc.interconnect.csr import CSRStorage, CSRStatus
 
 
 class DotProductAccel(LiteXModule):
@@ -13,10 +13,10 @@ class DotProductAccel(LiteXModule):
         self.b = [CSRStorage(32, name=f"b{i}") for i in range(8)]
 
         # start (1 bit)
-        self.start = CSRStorage(fields=[CSRField("start", size=1, description="Inicia o cálculo")])
+        self.start = CSRStorage(1, name="start")
 
         # done (1 bit) e result (64 bits)
-        self.done   = CSRStatus(fields=[CSRField("done", size=1, description="Cálculo concluído")])
+        self.done      = CSRStatus(1, name="done")
         self.result_lo = CSRStatus(32, name="result_lo")
         self.result_hi = CSRStatus(32, name="result_hi")
 
@@ -31,11 +31,11 @@ class DotProductAccel(LiteXModule):
         for i in range(8):
             self.comb += a_sigs[i].eq(self.a[i].storage)
             self.comb += b_sigs[i].eq(self.b[i].storage)
-        self.comb += start.eq(self.start.fields.start)
+        self.comb += start.eq(self.start.storage)
 
         # Exporta done/result para CSRs de leitura
         self.sync += [
-            self.done.fields.done.eq(done),
+            self.done.status.eq(done),
             self.result_lo.status.eq(result[:32]),
             self.result_hi.status.eq(result[32:]),
         ]
