@@ -57,9 +57,11 @@ module tb_dot_product_accel;
             @(posedge clk);
             start <= 1'b0;
 
-            // Espera done
-            wait(done == 1'b1);
-            @(posedge clk);
+            // Garante que vamos observar uma nova transição de done: 1->0->1
+            // Aguarda done baixar (se já estava em 1 de operação anterior)
+            while (done) @(posedge clk);
+            // Aguarda done subir novamente ao fim do cálculo
+            while (!done) @(posedge clk);
 
             // Checagem
             if (result !== sw_sum) begin
