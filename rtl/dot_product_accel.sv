@@ -61,7 +61,7 @@ module dot_product_accel (
             A[4] <= '0; A[5] <= '0; A[6] <= '0; A[7] <= '0;
             B[0] <= '0; B[1] <= '0; B[2] <= '0; B[3] <= '0;
             B[4] <= '0; B[5] <= '0; B[6] <= '0; B[7] <= '0;
-        end else if (state == S_IDLE && start) begin
+        end else if (start && (state != S_RUN)) begin
             A[0] <= a0; A[1] <= a1; A[2] <= a2; A[3] <= a3;
             A[4] <= a4; A[5] <= a5; A[6] <= a6; A[7] <= a7;
             B[0] <= b0; B[1] <= b1; B[2] <= b2; B[3] <= b3;

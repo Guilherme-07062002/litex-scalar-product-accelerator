@@ -28,11 +28,14 @@ module tb_dot_product_accel;
     task run_case(input integer seed);
         integer i;
         longint signed sw_sum;
+        integer s1, s2;
         begin
             // Gera dados determinísticos a partir da seed
+            s1 = seed;
+            s2 = seed + 32;
             for (i=0;i<8;i=i+1) begin
-                a[i] = $signed($random(seed));
-                b[i] = $signed($random(seed+32));
+                a[i] = $signed($random(s1));
+                b[i] = $signed($random(s2));
             end
             // Limita faixas para evitar overflow extremo nos testes
             for (i=0;i<8;i=i+1) begin

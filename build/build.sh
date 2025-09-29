@@ -40,66 +40,14 @@ compile_and_run() {
     echo
 }
 
-# Função para exibir o menu principal
+# Menu reduzido: apenas acelerador e GTKWave
 show_main_menu() {
     echo "===== MENU DE TESTES ====="
-    echo "1. ULA de 4 bits (74181)"
-    echo "2. ULA de 8 bits"
-    echo "3. Multiplicador Shift-Add"
-    echo "4. Produto Escalar (Acelerador)"
-    echo "5. Visualizar ondas (GTKWave)"
-    echo "6. Sair"
+    echo "1. Produto Escalar (Acelerador)"
+    echo "2. Visualizar ondas (GTKWave)"
+    echo "3. Sair"
     echo "============================="
-    echo "Escolha uma opção: "
-}
-
-# Função para exibir o submenu
-show_submenu() {
-    local ula_name=$1
-    echo "===== TESTES PARA $ula_name ====="
-    echo "1. Executar Testbench Completo"
-    echo "2. Voltar"
-    echo "============================="
-    echo "Escolha uma opção: "
-}
-
-# Função para executar os testes da ULA de 4 bits (74181)
-run_ula_4bits() {
-    local option=$1
-    case $option in
-        1) # Teste Simples
-            compile_and_run "ula_74181" "$RTL_DIR/ula_74181.sv" "$TB_DIR/tb_ula_74181.sv"
-            ;;
-        *) 
-            echo "Opção inválida!"
-            ;;
-    esac
-}
-
-# Função para executar os testes da ULA de 8 bits
-run_ula_8bits() {
-    local option=$1
-    case $option in
-        1) # Teste Simples
-            compile_and_run "ula_8_bits" "$RTL_DIR/ula_74181.sv" "$RTL_DIR/ula_8_bits.sv" "$TB_DIR/tb_ula_8_bits.sv"
-            ;;
-        *) 
-            echo "Opção inválida!"
-            ;;
-    esac
-}
-
-# Função para executar os testes do multiplicador Shift-Add
-run_multiplier() {
-    local option=$1
-    case $option in
-        1)
-            compile_and_run "shift_add_multiplier" "$RTL_DIR/ula_74181.sv" "$RTL_DIR/ula_8_bits.sv" "$RTL_DIR/shift_register.sv" "$RTL_DIR/counter.sv" "$RTL_DIR/shift_add_multiplier.sv" "$TB_DIR/tb_shift_add_multiplier.sv"
-            ;;
-        *)
-            echo "Opção inválida!"
-            ;;
-    esac
+    echo -n "Escolha uma opção: "
 }
 
 # Função para abrir um VCD no GTKWave (se existir)
@@ -117,12 +65,6 @@ open_vcd() {
         echo "Arquivo não encontrado: $vcd_file"
         echo "Gerando automaticamente o VCD correspondente..."
         case $1 in
-            "ula_74181.vcd")
-                compile_and_run "ula_74181" "$RTL_DIR/ula_74181.sv" "$TB_DIR/tb_ula_74181.sv" ;;
-            "ula_8_bits.vcd")
-                compile_and_run "ula_8_bits" "$RTL_DIR/ula_74181.sv" "$RTL_DIR/ula_8_bits.sv" "$TB_DIR/tb_ula_8_bits.sv" ;;
-            "shift_add_multiplier.vcd")
-                compile_and_run "shift_add_multiplier" "$RTL_DIR/ula_74181.sv" "$RTL_DIR/ula_8_bits.sv" "$RTL_DIR/shift_register.sv" "$RTL_DIR/counter.sv" "$RTL_DIR/shift_add_multiplier.sv" "$TB_DIR/tb_shift_add_multiplier.sv" ;;
             "dot_product_accel.vcd")
                 compile_and_run "dot_product_accel" "$RTL_DIR/dot_product_accel.sv" "$TB_DIR/tb_dot_product_accel.sv" ;;
             *)
@@ -143,20 +85,14 @@ show_gtkwave_menu() {
     while true; do
         clear
         echo "===== VISUALIZAR ONDAS (GTKWave) ====="
-        echo "1. 74181 (ula_74181.vcd)"
-        echo "2. ULA 8 bits (ula_8_bits.vcd)"
-    echo "3. Multiplicador Shift-Add (shift_add_multiplier.vcd)"
-    echo "4. Produto Escalar (dot_product_accel.vcd)"
-    echo "5. Voltar"
+        echo "1. Produto Escalar (dot_product_accel.vcd)"
+        echo "2. Voltar"
         echo "======================================"
         echo -n "Escolha uma opção: "
         read -r opt
         case $opt in
-            1) open_vcd "ula_74181.vcd" ;;
-            2) open_vcd "ula_8_bits.vcd" ;;
-            3) open_vcd "shift_add_multiplier.vcd" ;;
-            4) open_vcd "dot_product_accel.vcd" ;;
-            5) break ;;
+            1) open_vcd "dot_product_accel.vcd" ;;
+            2) break ;;
             *) echo "Opção inválida!"; read -r -p "Pressione ENTER para continuar..." ;;
         esac
     done
@@ -169,36 +105,6 @@ while true; do
     read -r main_option
     case $main_option in
         1)
-            while true; do
-                show_submenu "ULA DE 4 BITS (74181)"
-                read -r sub_option
-                if [ "$sub_option" == "2" ]; then break; fi
-                run_ula_4bits "$sub_option"
-                echo "Pressione ENTER para continuar..."; read -r
-            done
-            ;;
-        2)
-            while true; do
-                show_submenu "ULA DE 8 BITS"
-                read -r sub_option
-                if [ "$sub_option" == "2" ]; then break; fi
-                run_ula_8bits "$sub_option"
-                echo "Pressione ENTER para continuar..."; read -r
-            done
-            ;;
-        3)
-            while true; do
-                echo "===== TESTES PARA MULTIPLICADOR SHIFT-ADD ====="
-                echo "1. Executar Testbench Completo"
-                echo "2. Voltar"
-                echo "============================================"
-                read -r sub_option
-                if [ "$sub_option" == "2" ]; then break; fi
-                run_multiplier "$sub_option"
-                echo "Pressione ENTER para continuar..."; read -r
-            done
-            ;;
-        4)
             while true; do
                 echo "===== TESTES PARA PRODUTO ESCALAR (ACELERADOR) ====="
                 echo "1. Executar Testbench Completo"
@@ -214,10 +120,10 @@ while true; do
                 fi
             done
             ;;
-        5)
+        2)
             show_gtkwave_menu
             ;;
-        6)
+        3)
             echo "Saindo do programa..."; exit 0
             ;;
         *)

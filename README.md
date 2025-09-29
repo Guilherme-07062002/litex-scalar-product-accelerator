@@ -1,6 +1,6 @@
 # Tarefa 04 — SoC com LiteX: Acelerador de Produto Escalar via CSR
 
-Este repositório reaproveita a estrutura da tarefa anterior (testes em SV) e adiciona:
+Este repositório contém a Tarefa 04 com um acelerador de produto escalar integrado ao LiteX:
 
 - Acelerador de produto escalar 8×32 bits (signed) com resultado 64 bits.
 - Wrapper LiteX com interface via CSR (a0..a7, b0..b7, start, done, result_lo/hi).
@@ -14,25 +14,13 @@ Demonstrar a integração de um bloco SV customizado como periférico CSR em um 
 ## Estrutura
 
 ```text
-rtl/            Módulos RTL (registradores, contador, ULA, multiplicador)
-tb/             Testbench
+rtl/            Módulos RTL (acelerador de produto escalar)
+tb/             Testbench do acelerador
 sim/            Saída de simulação (VVP, VCD)
 build/          Script de automação (menu)
 doc/            (espaço para relatório/diagramas)
 ip/             Wrapper LiteX, SoC Python e firmware C
 ```
-
-## Módulos (tarefa anterior)
-
-`shift_register.sv` registrador universal (hold, shift L/R, carga paralela, ser_in/ser_out).
-
-`counter.sv` contador com load+enable (modo decremento aqui). Saturação em zero. Sinais: data_out, end_flag.
-
-`ula_74181.sv` / `ula_8_bits.sv` ULA em dois estágios (só soma usada).
-
-`shift_add_multiplier.sv` integra A, B, Q, contador e ULA com FSM.
-
-`tb_shift_add_multiplier.sv` vetores de teste e geração de VCD.
 
 ## Novo módulo (tarefa 04)
 
@@ -46,20 +34,10 @@ No Bash:
 bash build/build.sh
 ```
 
-Menu principal traz opções para ULAs, multiplicador e abrir ondas.
-
-- Opção 3 → 1 roda o testbench do multiplicador. VCD: `sim/shift_add_multiplier.vcd`.
-- Opção 4 → 1 roda o testbench do produto escalar. VCD: `sim/dot_product_accel.vcd`.
+Menu principal traz opções para rodar o testbench do acelerador e abrir ondas.
+VCD gerado: `sim/dot_product_accel.vcd`.
 
 ## Execução Direta (exemplos)
-
-Multiplicador:
-
-```bash
-iverilog -g2012 -o sim/shift_add_multiplier.vvp \
-    rtl/ula_74181.sv rtl/ula_8_bits.sv rtl/shift_register.sv rtl/counter.sv rtl/shift_add_multiplier.sv \
-    tb/tb_shift_add_multiplier.sv && vvp sim/shift_add_multiplier.vvp
-```
 
 Produto escalar:
 
@@ -70,7 +48,7 @@ iverilog -g2012 -o sim/dot_product_accel.vvp rtl/dot_product_accel.sv tb/tb_dot_
 Abrir ondas (se GTKWave instalado):
 
 ```bash
-gtkwave sim/shift_add_multiplier.vcd &
+gtkwave sim/dot_product_accel.vcd &
 ```
 
 ## SoC LiteX + Acelerador via CSR
@@ -96,8 +74,8 @@ Base do periférico: definida automaticamente pelo LiteX; ver `build/dotp/csr.cs
 
 Instalação (referência oficial):
 
-- https://github.com/enjoy-digital/litex
-- https://github.com/litex-hub/litex-boards
+- <https://github.com/enjoy-digital/litex>
+- <https://github.com/litex-hub/litex-boards>
 
 ### Build do SoC
 
