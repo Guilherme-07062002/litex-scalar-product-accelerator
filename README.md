@@ -34,8 +34,7 @@ No Bash:
 bash build/build.sh
 ```
 
-Menu principal traz opções para rodar o testbench do acelerador e abrir ondas.
-VCD gerado: `sim/dot_product_accel.vcd`.
+O menu principal traz opções para rodar o testbench do acelerador e abrir ondas. VCD gerado: `sim/dot_product_accel.vcd`.
 
 ## Execução Direta (exemplos)
 
@@ -50,6 +49,7 @@ Abrir ondas (se GTKWave instalado):
 ```bash
 gtkwave sim/dot_product_accel.vcd &
 ```
+
 
 ## SoC LiteX + Acelerador via CSR
 
@@ -77,28 +77,75 @@ Instalação (referência oficial):
 - <https://github.com/enjoy-digital/litex>
 - <https://github.com/litex-hub/litex-boards>
 
-### Build do SoC
+## Instalação rápida (exemplos)
 
-Gera bitstream e headers para firmware. Exemplo para i5 rev 7.2:
+As instruções a seguir são orientativas — adapte à sua distribuição e preferências. Recomenda-se usar um ambiente virtual Python.
+
+Linux (exemplo, Ubuntu/Debian):
 
 ```bash
-python -m ip.soc_dot_product --board i5 --revision 7.2 --sys-clk-freq 60000000 --build
+# Dependências do sistema (exemplo)
+sudo apt update
+sudo apt install -y build-essential git python3 python3-pip python3-venv \
+	gcc-multilib g++-multilib libffi-dev libssl-dev
+
+# Criar e ativar virtualenv
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Instalar LiteX e litex-boards via pip (modo rápido)
+pip install --upgrade pip
+pip install litex litex-boards
+
+# Instalar toolchain RISC-V (opcional; pode usar toolchains pré-compiladas)
+# Exemplo: riscv32-unknown-elf toolchain via apt (pode não existir em todas distros)
+# Alternativa: baixar pré-compilado em https://github.com/riscv/riscv-gnu-toolchain/releases
 ```
 
-Saídas relevantes:
+Windows (WSL ou Git Bash recomendado):
+
+Use WSL (Ubuntu) para seguir as instruções Linux acima. Em ambientes Windows nativos, instale uma toolchain RISC-V para Windows e garanta que `riscv32-unknown-elf-gcc` esteja no PATH.
+
+ECP5 FPGA toolchain (para síntese/bitstream):
+
+Siga as instruções das ferramentas open-source:
+
+- yosys: https://github.com/YosysHQ/yosys
+- nextpnr (ecp5): https://github.com/YosysHQ/nextpnr
+- prjtrellis: https://github.com/olofk/prjtrellis
+
+Para simplificar, consulte também os guias de instalação do LiteX e litex-boards (links acima).
+
+### Build do SoC
+
+Um script auxiliar foi adicionado para facilitar o build do SoC e a geração dos headers: `ip/build_soc.py`.
+
+Exemplo (ambiente com LiteX instalado):
+
+```bash
+python ip/build_soc.py --build
+```
+
+Saídas relevantes esperadas:
 
 - `build/dotp/csr.csv` e `build/dotp/software/include/generated/csr.h`
-- Bitstream em `build/dotp/gateware/`
+- Bitstream em `build/dotp/gateware/` (se a síntese for habilitada e as ferramentas estiverem presentes)
 
 Para carregar (quando suportado no ambiente):
 
 ```bash
-python -m ip.soc_dot_product --board i5 --revision 7.2 --load
+python ip/soc_dot_product.py --load
 ```
 
 ### Compilar/rodar firmware
 
-Após o build do SoC, entre em `build/dotp/software` e compile com o ambiente LiteX (o Builder já estrutura o projeto e compila o BIOS/firmware quando configurado). Opcionalmente, você pode criar um `Makefile` próprio apontando para os headers em `include/generated/`.
+Após o build do SoC, use o Makefile em `ip/` para compilar o firmware. Exemplo:
+
+```bash
+make -C ip CROSS_COMPILE=riscv32-unknown-elf-
+```
+
+O Makefile procura os headers gerados em `build/dotp/software/include/generated` e compila `ip/firmware_dotp.c` em `ip/build/firmware.elf` e `ip/build/firmware.bin`.
 
 Execução: conectar via UART (serial) ao SoC; o firmware imprime os resultados de SW e HW e a verificação `[OK]`.
 
