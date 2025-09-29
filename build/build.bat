@@ -36,6 +36,7 @@ echo ===== MENU DE TESTES =====
 echo 1. ULA de 4 bits (74181)
 echo 2. ULA de 8 bits
 echo 3. Multiplicador Shift-Add
+echo 4. Produto Escalar (Acelerador)
 echo 4. Visualizar ondas ^(GTKWave^)
 echo 5. Sair
 echo =============================
@@ -44,8 +45,9 @@ set /p main_option=Escolha uma opcao:
 if "%main_option%"=="1" goto menu_ula_4bits
 if "%main_option%"=="2" goto menu_ula_8bits
 if "%main_option%"=="3" goto menu_multiplier
-if "%main_option%"=="4" goto menu_gtkwave
-if "%main_option%"=="5" goto exit
+if "%main_option%"=="4" goto menu_dotp
+if "%main_option%"=="5" goto menu_gtkwave
+if "%main_option%"=="6" goto exit
 echo Opcao invalida! Pressione qualquer tecla para continuar...
 pause > nul
 goto main_menu
@@ -104,7 +106,8 @@ set /p gw_option=Escolha uma opcao:
 
 if "%gw_option%"=="1" call :open_vcd "ula_74181.vcd" & pause & goto menu_gtkwave
 if "%gw_option%"=="2" call :open_vcd "ula_8_bits.vcd" & pause & goto menu_gtkwave
-if "%gw_option%"=="3" goto main_menu
+if "%gw_option%"=="3" call :open_vcd "dot_product_accel.vcd" & pause & goto menu_gtkwave
+if "%gw_option%"=="4" goto main_menu
 echo Opcao invalida! Pressione qualquer tecla para continuar...
 pause > nul
 goto menu_gtkwave
@@ -147,6 +150,8 @@ if exist "%VCD_FILE%" (
         call :compile_and_run "ula_74181" "%RTL_DIR%\ula_74181.sv" "%TB_DIR%\tb_ula_74181.sv"
     ) else if /I "%~1"=="ula_8_bits.vcd" (
         call :compile_and_run "ula_8_bits" "%RTL_DIR%\ula_74181.sv" "%RTL_DIR%\ula_8_bits.sv" "%TB_DIR%\tb_ula_8_bits.sv"
+    ) else if /I "%~1"=="dot_product_accel.vcd" (
+        call :compile_and_run "dot_product_accel" "%RTL_DIR%\dot_product_accel.sv" "%TB_DIR%\tb_dot_product_accel.sv"
     ) else (
         echo Nao foi possivel identificar o teste para %~1
         goto :eof
@@ -159,3 +164,21 @@ if exist "%VCD_FILE%" (
     )
     goto :eof
 )
+
+:menu_dotp
+cls
+echo ===== TESTES PARA PRODUTO ESCALAR (ACELERADOR) =====
+echo 1. Executar Testbench Completo (tb_dot_product_accel)
+echo 2. Voltar
+echo ============================================
+set /p sub_option=Escolha uma opcao: 
+
+if "%sub_option%"=="1" (
+    call :compile_and_run "dot_product_accel" "%RTL_DIR%\dot_product_accel.sv" "%TB_DIR%\tb_dot_product_accel.sv"
+    pause
+    goto menu_dotp
+)
+if "%sub_option%"=="2" goto main_menu
+echo Opcao invalida! Pressione qualquer tecla para continuar...
+pause > nul
+goto menu_dotp

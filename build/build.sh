@@ -46,8 +46,9 @@ show_main_menu() {
     echo "1. ULA de 4 bits (74181)"
     echo "2. ULA de 8 bits"
     echo "3. Multiplicador Shift-Add"
-    echo "4. Visualizar ondas (GTKWave)"
-    echo "5. Sair"
+    echo "4. Produto Escalar (Acelerador)"
+    echo "5. Visualizar ondas (GTKWave)"
+    echo "6. Sair"
     echo "============================="
     echo "Escolha uma opção: "
 }
@@ -122,6 +123,8 @@ open_vcd() {
                 compile_and_run "ula_8_bits" "$RTL_DIR/ula_74181.sv" "$RTL_DIR/ula_8_bits.sv" "$TB_DIR/tb_ula_8_bits.sv" ;;
             "shift_add_multiplier.vcd")
                 compile_and_run "shift_add_multiplier" "$RTL_DIR/ula_74181.sv" "$RTL_DIR/ula_8_bits.sv" "$RTL_DIR/shift_register.sv" "$RTL_DIR/counter.sv" "$RTL_DIR/shift_add_multiplier.sv" "$TB_DIR/tb_shift_add_multiplier.sv" ;;
+            "dot_product_accel.vcd")
+                compile_and_run "dot_product_accel" "$RTL_DIR/dot_product_accel.sv" "$TB_DIR/tb_dot_product_accel.sv" ;;
             *)
                 echo "Não foi possível identificar o teste para $1" ;;
         esac
@@ -142,8 +145,9 @@ show_gtkwave_menu() {
         echo "===== VISUALIZAR ONDAS (GTKWave) ====="
         echo "1. 74181 (ula_74181.vcd)"
         echo "2. ULA 8 bits (ula_8_bits.vcd)"
-        echo "3. Multiplicador Shift-Add (shift_add_multiplier.vcd)"
-        echo "4. Voltar"
+    echo "3. Multiplicador Shift-Add (shift_add_multiplier.vcd)"
+    echo "4. Produto Escalar (dot_product_accel.vcd)"
+    echo "5. Voltar"
         echo "======================================"
         echo -n "Escolha uma opção: "
         read -r opt
@@ -151,7 +155,8 @@ show_gtkwave_menu() {
             1) open_vcd "ula_74181.vcd" ;;
             2) open_vcd "ula_8_bits.vcd" ;;
             3) open_vcd "shift_add_multiplier.vcd" ;;
-            4) break ;;
+            4) open_vcd "dot_product_accel.vcd" ;;
+            5) break ;;
             *) echo "Opção inválida!"; read -r -p "Pressione ENTER para continuar..." ;;
         esac
     done
@@ -194,9 +199,25 @@ while true; do
             done
             ;;
         4)
-            show_gtkwave_menu
+            while true; do
+                echo "===== TESTES PARA PRODUTO ESCALAR (ACELERADOR) ====="
+                echo "1. Executar Testbench Completo"
+                echo "2. Voltar"
+                echo "============================================"
+                read -r sub_option
+                if [ "$sub_option" == "2" ]; then break; fi
+                if [ "$sub_option" == "1" ]; then
+                    compile_and_run "dot_product_accel" "$RTL_DIR/dot_product_accel.sv" "$TB_DIR/tb_dot_product_accel.sv"
+                    echo "Pressione ENTER para continuar..."; read -r
+                else
+                    echo "Opção inválida!"; read -r
+                fi
+            done
             ;;
         5)
+            show_gtkwave_menu
+            ;;
+        6)
             echo "Saindo do programa..."; exit 0
             ;;
         *)
