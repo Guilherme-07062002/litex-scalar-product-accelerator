@@ -14,7 +14,7 @@ OUT_ELF := $(BUILD_DIR)/firmware.elf
 OUT_BIN := $(BUILD_DIR)/firmware.bin
 
 CFLAGS := -O2 -march=rv32imac -mabi=ilp32 -Wall -Wextra -I$(INCLUDE) -I$(INCLUDE)/.. -I../.venv/lib/python3.12/site-packages/litex/soc/software/include -I.
-LDFLAGS := -T linker.ld
+LDFLAGS := -T linker.ld -Wl,--no-warn-rwx-segments
 
 .PHONY: all clean
 

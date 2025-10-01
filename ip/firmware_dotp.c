@@ -24,7 +24,7 @@ static void uart_write_str(const char* s) {
     }
 }
 
-static void uart_write_hex32(uint32_t v) {
+__attribute__((unused)) static void uart_write_hex32(uint32_t v) {
     static const char* hex = "0123456789ABCDEF";
     uart_write_str("0x");
     for (int i = 7; i >= 0; --i) {

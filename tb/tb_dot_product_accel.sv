@@ -63,19 +63,37 @@ module tb_dot_product_accel;
             // Aguarda done subir novamente ao fim do cálculo
             while (!done) @(posedge clk);
 
-            // Checagem
+            // Checagem (exibe decimal e hexadecimal para facilitar análise)
             if (result !== sw_sum) begin
-                $display("[ERRO] seed=%0d esperado=%0d obtido=%0d", seed, sw_sum, result);
+                $display("[ERRO] seed=%0d esperado=%0d (0x%016h) obtido=%0d (0x%016h)", seed, sw_sum, sw_sum, result, result);
                 $fatal(1);
             end else begin
-                $display("[OK] seed=%0d resultado=%0d", seed, result);
+                $display("[OK] seed=%0d resultado=%0d (0x%016h)", seed, result, result);
             end
         end
     endtask
 
+    // Controle por plusargs:
+    // +numseeds=N     -> executa N seeds sequenciais (se 0, usa modo padrão)
+    // +seedstart=S    -> primeira seed (padrão 1)
+    // +vcd=0          -> desabilita geração de VCD (padrão 1/habilitado)
+    integer numseeds;
+    integer seedstart;
+    integer vcd_en;
+
     initial begin
-        $dumpfile("sim/dot_product_accel.vcd");
-        $dumpvars(0, tb_dot_product_accel);
+        // Defaults
+        numseeds  = 0;
+        seedstart = 1;
+        vcd_en    = 1;
+        void'($value$plusargs("numseeds=%d", numseeds));
+        void'($value$plusargs("seedstart=%d", seedstart));
+        void'($value$plusargs("vcd=%d", vcd_en));
+
+        if (vcd_en != 0) begin
+            $dumpfile("sim/dot_product_accel.vcd");
+            $dumpvars(0, tb_dot_product_accel);
+        end
         rst   = 1;
         start = 0;
         a0=0;a1=0;a2=0;a3=0;a4=0;a5=0;a6=0;a7=0;
@@ -83,9 +101,16 @@ module tb_dot_product_accel;
         repeat(5) @(posedge clk);
         rst = 0;
 
-        run_case(1);
-        run_case(42);
-        run_case(2025);
+        if (numseeds > 0) begin
+            for (integer k = 0; k < numseeds; k = k + 1) begin
+                run_case(seedstart + k);
+            end
+        end else begin
+            // Modo padrão: três seeds determinísticas
+            run_case(1);
+            run_case(42);
+            run_case(2025);
+        end
 
         $display("Todos os testes passaram.");
         $finish;
