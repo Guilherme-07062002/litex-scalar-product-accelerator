@@ -5,27 +5,48 @@
 CROSS_COMPILE ?= riscv32-unknown-elf-
 PYTHON ?= python
 
-.PHONY: help build-soc firmware build-all clean
+.PHONY: help build-soc headers-only sim firmware build-all clean load prog-only
 
 help:
 	@echo "Makefile de alto nível para este projeto"
 	@echo "Targets:"
-	@echo "  build-soc      - roda ip/build_soc.py --build (requer LiteX)"
+	@echo "  build-soc      - gera gateware com LiteX (requer toolchain FPGA: yosys/nextpnr/prjtrellis)"
+	@echo "  headers-only   - gera apenas headers/CSRs (sem sintetizar gateware)"
+	@echo "  sim            - compila e executa o testbench do acelerador (iverilog + vvp)"
 	@echo "  firmware       - compila firmware em ip/ via ip/Makefile (requer headers gerados)"
 	@echo "  build-all      - build-soc seguido de firmware"
 	@echo "  clean          - limpa artefatos de firmware (ip/clean)"
+	@echo "  load           - programa o bitstream gerado (usa openFPGALoader/ecpprog via script)"
+	@echo "  prog-only      - somente programar bitstream existente (sem build)"
+	@echo "  uart-log PORT=/dev/ttyUSB0 BAUD=115200 - captura a saída UART em docs/uart_log.txt"
 
 build-soc:
 	@echo "Verificando se LiteX está disponível..."
-	@$(PYTHON) - <<PY || (echo "LiteX não encontrado. Instale litex no seu ambiente."; exit 1)
-try:
-    import litex
-    print('LiteX disponível')
-except Exception as e:
-    raise
-PY
-	@echo "Iniciando build do SoC (ip/build_soc.py --build)"
-	@$(PYTHON) ip/build_soc.py --build
+	@$(PYTHON) -c "import litex; print('LiteX disponível')" || (echo "LiteX não encontrado. Instale litex no seu ambiente."; exit 1)
+	@echo "Iniciando build do SoC (ip/soc_dot_product.py --build --sys-clk-freq 50e6)"
+	@$(PYTHON) ip/soc_dot_product.py --build --sys-clk-freq 50e6
+
+load:
+	@echo "Programando bitstream (openFPGALoader/ecpprog)..."
+	@$(PYTHON) ip/soc_dot_product.py --prog-only
+
+prog-only: load
+
+headers-only:
+	@echo "Gerando apenas headers/CSRs (sem gateware)..."
+	@$(PYTHON) ip/soc_dot_product.py --headers-only
+
+PORT ?= /dev/ttyUSB0
+BAUD ?= 115200
+uart-log:
+	@echo "Capturando UART de $(PORT) a $(BAUD) baud para docs/uart_log.txt... (Ctrl+C para encerrar)"
+	@$(PYTHON) tools/capture_uart.py --port $(PORT) --baud $(BAUD) --out docs/uart_log.txt
+
+sim:
+	@echo "Compilando e executando testbench do acelerador (iverilog)..."
+	@mkdir -p sim
+	@iverilog -g2012 -o sim/dot_product_accel.vvp rtl/dot_product_accel.sv tb/tb_dot_product_accel.sv
+	@vvp sim/dot_product_accel.vvp
 
 firmware:
 	@echo "Compilando firmware (ip/Makefile)..."

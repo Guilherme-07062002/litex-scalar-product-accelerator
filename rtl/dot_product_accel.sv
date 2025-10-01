@@ -80,7 +80,7 @@ module dot_product_accel (
         idx_n   = idx;
         acc_n   = acc;
 
-        unique case (state)
+    case (state)
             S_IDLE: begin
                 if (start) begin
                     idx_n = 4'd0;
@@ -128,7 +128,7 @@ module dot_product_accel (
             end
 
             // Sinal done
-            unique case (state_n)
+            case (state_n)
                 S_IDLE: done <= 1'b0;
                 S_RUN:  done <= 1'b0;
                 S_DONE: done <= 1'b1;

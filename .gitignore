@@ -18,3 +18,67 @@ Thumbs.db # Windows
 gtkwave/
 
 *.txt
+
+# Python virtualenv
+.venv/
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build artefacts
+/build/
+
+# IP / firmware build outputs
+ip/build/
+ip/*.elf
+ip/*.bin
+ip/build/
+
+# Gateware / P&R outputs
+build/**/gateware/
+*.bit
+*.svf
+*.rpt
+*.json
+*.asc
+*.fasm
+*.config
+*.svf
+
+# Toolchain installers / large archives
+tools/*.tar.gz
+tools/*.tgz
+
+# Local toolchain or downloaded oss-cad-suite environment (ignore untracked installs)
+tools/oss-cad-suite/
+
+# RISC-V toolchain wrappers / binaries (if generated locally)
+tools/bin/
+
+# Editor directories and project files
+.vscode/
+.idea/
+*.iml
+
+# Swap / backup
+*~
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Misc
+tags
+cscope.out
