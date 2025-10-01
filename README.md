@@ -97,25 +97,37 @@ make load PYTHON=.venv/bin/python
 .venv/bin/python ip/firmware_sim.py
 ```
 
-### Mapa de CSR (resumo)
+### Mapa de CSR
 
-Base do periférico: definida automaticamente pelo LiteX; ver `build/dotp/csr.csv`.
+O mapa de registradores do acelerador `dotp` é gerado dinamicamente pelo LiteX. Abaixo está um exemplo do mapa gerado para este projeto, que pode ser encontrado em `build/dotp/csr.csv`.
 
-- write: `dotp_a0..a7`, `dotp_b0..b7`, `dotp_start`.
-- read:  `dotp_done.done`, `dotp_result_lo`, `dotp_result_hi`.
+| Registrador      | Endereço (Offset) | Acesso | Descrição                               |
+| ---------------- | ----------------- | ------ | ----------------------------------------- |
+| `dotp_a0`        | `0x00`            | RW     | Elemento 0 do vetor A (32 bits)           |
+| `dotp_a1`        | `0x04`            | RW     | Elemento 1 do vetor A (32 bits)           |
+| ...              | ...               | ...    | ...                                       |
+| `dotp_a7`        | `0x1C`            | RW     | Elemento 7 do vetor A (32 bits)           |
+| `dotp_b0`        | `0x20`            | RW     | Elemento 0 do vetor B (32 bits)           |
+| ...              | ...               | ...    | ...                                       |
+| `dotp_b7`        | `0x3C`            | RW     | Elemento 7 do vetor B (32 bits)           |
+| `dotp_start`     | `0x40`            | RW     | Inicia o cálculo (escrita de 1)           |
+| `dotp_done`      | `0x44`            | RO     | Status; 1 quando o cálculo está pronto    |
+| `dotp_result_lo` | `0x48`            | RO     | 32 bits inferiores do resultado (64 bits) |
+| `dotp_result_hi` | `0x4C`            | RO     | 32 bits superiores do resultado (64 bits) |
 
-Endereços (exemplo gerado neste projeto):
+O endereço base do periférico (`csr_base`) é `0xf0000000`.
 
-- Base CSR: `0xF0000000`
-- Offsets:
-	- `a0..a7`  → `0x00 .. 0x1C`
-	- `b0..b7`  → `0x20 .. 0x3C`
-	- `start`   → `0x40`
-	- `done`    → `0x44`
-	- `result_lo` → `0x48`
-	- `result_hi` → `0x4C`
+### Log de Execução
 
-### Requisitos/Dependências
+Abaixo, o log de saída esperado no terminal serial ao executar o firmware na placa ou através da simulação (`ip/firmware_sim.py`).
+
+```text
+LiteX Dot-Product Accelerator Demo
+CPU: VexRiscv
+Software: 0xFFFFFFFFFFFFFFF8
+Hardware: 0xFFFFFFFFFFFFFFF8
+[OK] Resultado coincide!
+```
 
 - Python 3.8+
 - LiteX, Migen, toolchain ECP5 (yosys+nextpnr-ecp5+prjtrellis)
