@@ -56,7 +56,7 @@ gtkwave sim/dot_product_accel.vcd &
 Arquivos principais:
 
 - `ip/dot_product_wrapper.py`: wrapper LiteX/Migen, exporta registradores CSR e instancia `rtl/dot_product_accel.sv`.
-- `ip/soc_dot_product.py`: SoC baseado no target Colorlight i5, adiciona o periférico e gera `csr.h` para o firmware.
+- `ip/soc_dot_product.py`: SoC baseado no target Colorlight i5/i9 (padrão i9 rev 7.2), adiciona o periférico e gera `csr.h` para o firmware. Inclui suporte a gravação de bitstream via `openFPGALoader`/`ecpprog`.
 - `ip/firmware_dotp.c`: firmware em C que escreve os vetores, aciona `start`, espera `done` e lê `result` (comparando com software).
 
 ### Como rodar (Makefile)
@@ -83,6 +83,12 @@ make -C ip CROSS_COMPILE=../tools/bin/riscv32-unknown-elf- all
 
 ```
 make build-soc PYTHON=.venv/bin/python
+```
+
+- (Opcional) Carregar o bitstream gerado (requer openFPGALoader ou ecpprog):
+
+```
+make load PYTHON=.venv/bin/python
 ```
 
 - (Opcional) Simular o firmware end-to-end sem FPGA:
@@ -159,6 +165,15 @@ Siga as instruções das ferramentas open-source:
 
 Para simplificar, consulte também os guias de instalação do LiteX e litex-boards (links acima).
 
+Instalação rápida (oss-cad-suite) usando script auxiliar:
+
+```
+# Baixe a URL da release mais recente do oss-cad-suite
+./tools/install_ecp5_toolchain.sh https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-12-20/oss-cad-suite-linux-x64-20241220.tgz
+# Ative o ambiente
+source tools/oss-cad-suite/environment
+```
+
 ### Build do SoC
 
 Um script auxiliar foi adicionado para facilitar o build do SoC e a geração dos headers: `ip/build_soc.py`.
@@ -176,16 +191,19 @@ Saídas relevantes esperadas:
 
 Para carregar (quando suportado no ambiente):
 
-```bash
-python ip/soc_dot_product.py --load
+Você pode usar o alvo `make load` (que chama `ip/soc_dot_product.py --prog-only`) ou pedir para o script carregar após o build com `--load`. Por padrão, o script tenta detectar o bitstream em `build/dotp/gateware/` e usar `openFPGALoader -b colorlight -f <bit>`. Para usar `ecpprog` ou apontar um bitstream específico:
+
+```
+.venv/bin/python ip/soc_dot_product.py --build --load --loader ecpprog
+.venv/bin/python ip/soc_dot_product.py --prog-only --bitstream build/dotp/gateware/top.bit
 ```
 
-Target/revisão (conforme aulas): para usar Colorlight i9 rev 7.2, execute com:
+Target/revisão (conforme aulas): o padrão agora é Colorlight i9 rev 7.2. Para mudar:
 
 ```bash
-.venv/bin/python ip/soc_dot_product.py --headers-only --board i9 --revision 7.2
+.venv/bin/python ip/soc_dot_product.py --headers-only --board i5 --revision 7.0
 # Para build completo (requer ferramentas FPGA):
-.venv/bin/python ip/soc_dot_product.py --build --board i9 --revision 7.2
+.venv/bin/python ip/soc_dot_product.py --build --board i5 --revision 7.0
 ```
 
 ### Compilar/rodar firmware
@@ -217,6 +235,33 @@ Você pode gerar um log formatado para anexar no relatório com:
 ```bash
 python3 execution_log.py
 ```
+
+## Troubleshooting
+
+- Ferramentas FPGA ausentes (yosys/nextpnr/prjtrellis):
+	- Sintomas: erro ao iniciar síntese/place&route; mensagens indicando executáveis não encontrados.
+	- Ação: instale a toolchain ECP5 open-source conforme links em "Requisitos/Dependências". Verifique se `yosys`, `nextpnr-ecp5` e `ecppack` (prjtrellis) estão no PATH.
+
+- Erro de BIOS/timer0 ao compilar software no LiteX:
+	- Sintomas: mensagens como "BIOS needs timer0 peripheral" durante a fase de software.
+	- Ação: neste projeto, o build de gateware está configurado com `compile_software=False` para evitar essa dependência. Caso deseje compilar BIOS/software, garanta `with_timer=True` no SoC e um ambiente completo de software do LiteX.
+
+- Carregar bitstream (`--load`/`--prog-only`) falha:
+	- Sintomas: erro informando que `openFPGALoader`/`ecpprog` não está no PATH, ou bitstream não encontrado.
+	- Ação: instale uma das ferramentas e garanta que está no PATH. Use `--loader ecpprog` para alternar, e `--bitstream <caminho>` para escolher o arquivo explicitamente.
+
+- Revisão/board incorretos (Colorlight i5/i9):
+	- Sintomas: falhas de pinos/constraints ou erros de plataforma.
+	- Ação: especifique corretamente `--board` e `--revision` (ex.: `--board i9 --revision 7.2`). O padrão é i5 rev 7.0.
+
+- Cabeçalhos `csr.h` não encontrados ao compilar o firmware:
+	- Sintomas: erro no Makefile de `ip/` avisando que os headers não existem.
+	- Ação: rode `make headers-only` ou `make build-soc` antes de `make -C ip`. Verifique se `build/dotp/software/include/generated/csr.h` foi gerado.
+
+- Toolchain RISC-V:
+	- Sintomas: `riscv32-unknown-elf-gcc` não encontrado.
+	- Ação: instale uma toolchain RISC-V ou use a fornecida localmente (ajuste `CROSS_COMPILE`). Há um toolchain de exemplo em `tools/bin/` com wrappers; você pode compilar com `make -C ip CROSS_COMPILE=../tools/bin/riscv32-unknown-elf-`.
+
 
 ## Referências
 

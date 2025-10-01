@@ -119,7 +119,7 @@
         "config_cpu_human_name": "vexriscv",
         "config_cpu_nop": "nop",
         "config_bios_no_build_time": null,
-        "config_identifier": "litex soc on colorlight i5",
+        "config_identifier": "litex soc on colorlight i9",
         "config_csr_data_width": 32,
         "config_csr_alignment": 32,
         "config_bus_standard": "wishbone",

@@ -5,7 +5,7 @@
 CROSS_COMPILE ?= riscv32-unknown-elf-
 PYTHON ?= python
 
-.PHONY: help build-soc headers-only sim firmware build-all clean
+.PHONY: help build-soc headers-only sim firmware build-all clean load prog-only
 
 help:
 	@echo "Makefile de alto nível para este projeto"
@@ -16,12 +16,20 @@ help:
 	@echo "  firmware       - compila firmware em ip/ via ip/Makefile (requer headers gerados)"
 	@echo "  build-all      - build-soc seguido de firmware"
 	@echo "  clean          - limpa artefatos de firmware (ip/clean)"
+	@echo "  load           - programa o bitstream gerado (usa openFPGALoader/ecpprog via script)"
+	@echo "  prog-only      - somente programar bitstream existente (sem build)"
 
 build-soc:
 	@echo "Verificando se LiteX está disponível..."
 	@$(PYTHON) -c "import litex; print('LiteX disponível')" || (echo "LiteX não encontrado. Instale litex no seu ambiente."; exit 1)
 	@echo "Iniciando build do SoC (ip/soc_dot_product.py --build)"
 	@$(PYTHON) ip/soc_dot_product.py --build
+
+load:
+	@echo "Programando bitstream (openFPGALoader/ecpprog)..."
+	@$(PYTHON) ip/soc_dot_product.py --prog-only
+
+prog-only: load
 
 headers-only:
 	@echo "Gerando apenas headers/CSRs (sem gateware)..."
