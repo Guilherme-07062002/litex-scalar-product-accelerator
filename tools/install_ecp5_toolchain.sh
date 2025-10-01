@@ -25,19 +25,42 @@ TMP_TGZ="$ROOT_DIR/tools/oss-cad-suite.tgz"
 
 mkdir -p "$ROOT_DIR/tools"
 
-if ! command -v curl >/dev/null 2>&1; then
-  echo "Erro: curl não encontrado. Instale curl e tente novamente."
-  exit 2
+download() {
+  local url="$1" out="$2"
+  if command -v curl >/dev/null 2>&1; then
+    echo "Baixando (curl) oss-cad-suite de: $url"
+    # --http1.1 evita alguns problemas de HTTP/2; -C - permite resume; --retry para robustez
+    curl -L --fail --http1.1 --retry 5 --retry-delay 3 -C - -o "$out" "$url" && return 0
+    echo "Aviso: curl falhou, tentando wget..."
+  fi
+  if command -v wget >/dev/null 2>&1; then
+    echo "Baixando (wget) oss-cad-suite de: $url"
+    wget -c -O "$out" "$url" && return 0
+  fi
+  echo "Erro: nem curl nem wget conseguiram baixar o arquivo."
+  return 1
+}
+
+extract() {
+  local tarfile="$1" dest="$2"
+  if ! command -v tar >/dev/null 2>&1; then
+    echo "Erro: 'tar' não encontrado. Instale tar e tente novamente."
+    return 2
+  fi
+  rm -rf "$dest"
+  mkdir -p "$dest"
+  echo "Extraindo para $dest ..."
+  tar -xzf "$tarfile" -C "$dest" --strip-components=1
+}
+
+download "$URL" "$TMP_TGZ"
+
+if [[ ! -s "$TMP_TGZ" ]]; then
+  echo "Erro: arquivo baixado está ausente ou vazio: $TMP_TGZ"
+  exit 3
 fi
 
-echo "Baixando oss-cad-suite de: $URL"
-curl -L "$URL" -o "$TMP_TGZ"
-
-rm -rf "$DEST_DIR"
-mkdir -p "$DEST_DIR"
-
-echo "Extraindo para $DEST_DIR ..."
-tar -xzf "$TMP_TGZ" -C "$DEST_DIR" --strip-components=1
+extract "$TMP_TGZ" "$DEST_DIR"
 rm -f "$TMP_TGZ"
 
 echo "Instalação concluída. Para usar nesta sessão:"

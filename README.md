@@ -198,12 +198,18 @@ Você pode usar o alvo `make load` (que chama `ip/soc_dot_product.py --prog-only
 .venv/bin/python ip/soc_dot_product.py --prog-only --bitstream build/dotp/gateware/top.bit
 ```
 
-Target/revisão (conforme aulas): o padrão agora é Colorlight i9 rev 7.2. Para mudar:
+Target/revisão (conforme aulas): o padrão é Colorlight i9 rev 7.2. Para mudar:
 
 ```bash
 .venv/bin/python ip/soc_dot_product.py --headers-only --board i5 --revision 7.0
 # Para build completo (requer ferramentas FPGA):
 .venv/bin/python ip/soc_dot_product.py --build --board i5 --revision 7.0
+
+Clock padrão do SoC: 50 MHz. Para alterar via CLI:
+
+```bash
+.venv/bin/python ip/soc_dot_product.py --build --sys-clk-freq 60e6
+```
 ```
 
 ### Compilar/rodar firmware

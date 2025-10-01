@@ -22,8 +22,8 @@ help:
 build-soc:
 	@echo "Verificando se LiteX está disponível..."
 	@$(PYTHON) -c "import litex; print('LiteX disponível')" || (echo "LiteX não encontrado. Instale litex no seu ambiente."; exit 1)
-	@echo "Iniciando build do SoC (ip/soc_dot_product.py --build)"
-	@$(PYTHON) ip/soc_dot_product.py --build
+	@echo "Iniciando build do SoC (ip/soc_dot_product.py --build --sys-clk-freq 50e6)"
+	@$(PYTHON) ip/soc_dot_product.py --build --sys-clk-freq 50e6
 
 load:
 	@echo "Programando bitstream (openFPGALoader/ecpprog)..."

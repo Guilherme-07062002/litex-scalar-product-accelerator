@@ -28,7 +28,7 @@ class SoCWithDotProduct(ColorlightBaseSoC):
         super().__init__(*args, **kwargs)
 
         # Instancia e adiciona o acelerador
-        self.dotp = DotProductAccel(self.platform, sys_clk_freq=int(kwargs.get("sys_clk_freq", 60e6)))
+        self.dotp = DotProductAccel(self.platform, sys_clk_freq=int(kwargs.get("sys_clk_freq", 50e6)))
         # Adiciona CSR para o periférico
         self.add_csr("dotp")
 
@@ -44,7 +44,7 @@ def main():
     parser = LiteXArgumentParser(description="SoC Colorlight + Acelerador Produto Escalar")
     parser.add_target_argument("--board", default="i9")
     parser.add_target_argument("--revision", default="7.2")
-    parser.add_target_argument("--sys-clk-freq", default=60e6, type=float)
+    parser.add_target_argument("--sys-clk-freq", default=50e6, type=float)
     parser.add_target_argument("--build", action="store_true")
     parser.add_target_argument("--load", action="store_true")
     parser.add_argument("--prog-only", action="store_true", help="Apenas carregar bitstream (sem build)")

@@ -55,7 +55,13 @@ static void hw_write_vectors(const int32_t a[8], const int32_t b[8]) {
 }
 
 static void hw_start() {
+    // Gera um pulso em 'start' para evitar reexecuções involuntárias
+    // Caso o bit fique em nível alto até o DONE, o hardware poderia reiniciar
+    // automaticamente uma nova operação. Portanto, pulse e depois limpe.
     dotp_start_write(1);
+    // Pequeno atraso para garantir pelo menos 1-2 ciclos de clock do SoC
+    for (volatile int i = 0; i < 16; ++i) { /* noop */ }
+    dotp_start_write(0);
 }
 
 static bool hw_done() {

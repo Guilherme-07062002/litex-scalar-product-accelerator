@@ -142,8 +142,15 @@ def hw_write_vectors(a, b):
     dotp_b0_write(b[0] & 0xFFFFFFFF); dotp_b1_write(b[1] & 0xFFFFFFFF); dotp_b2_write(b[2] & 0xFFFFFFFF); dotp_b3_write(b[3] & 0xFFFFFFFF)
     dotp_b4_write(b[4] & 0xFFFFFFFF); dotp_b5_write(b[5] & 0xFFFFFFFF); dotp_b6_write(b[6] & 0xFFFFFFFF); dotp_b7_write(b[7] & 0xFFFFFFFF)
 
-def hw_start():
+def hw_start(accel: DotProductAccelSim):
+    """Gera um pulso em 'start' equivalente ao firmware C.
+    Seta start=1, avança um ciclo (tick) e então limpa para 0.
+    """
     dotp_start_write(1)
+    # Avança 1 ciclo para que o acelerador capture o comando
+    accel.tick()
+    # Limpa o start para evitar reexecuções involuntárias
+    dotp_start_write(0)
 
 def hw_done():
     return dotp_done_read()
@@ -183,17 +190,15 @@ def main():
     # Hardware
     print(f"\n⚙️  Executando no acelerador...")
     hw_write_vectors(A, B)
-    hw_start()
+    # Pulso start como no firmware C
+    hw_start(accel)
     
-    # Simular ciclos até done
+    # Simular ciclos até done (o start já foi limpo dentro de hw_start)
     max_cycles = 20
     for cycle in range(max_cycles):
-        accel.tick()
         if hw_done():
             break
-        # Reset start após 1 ciclo
-        if cycle == 0:
-            dotp_start_write(0)
+        accel.tick()
     
     hw = hw_result()
     uart_write_str("Hardware: "); uart_write_hex64(hw & 0xFFFFFFFFFFFFFFFF); uart_write_str("\n")
