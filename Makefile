@@ -18,6 +18,7 @@ help:
 	@echo "  clean          - limpa artefatos de firmware (ip/clean)"
 	@echo "  load           - programa o bitstream gerado (usa openFPGALoader/ecpprog via script)"
 	@echo "  prog-only      - somente programar bitstream existente (sem build)"
+	@echo "  uart-log PORT=/dev/ttyUSB0 BAUD=115200 - captura a saída UART em docs/uart_log.txt"
 
 build-soc:
 	@echo "Verificando se LiteX está disponível..."
@@ -34,6 +35,12 @@ prog-only: load
 headers-only:
 	@echo "Gerando apenas headers/CSRs (sem gateware)..."
 	@$(PYTHON) ip/soc_dot_product.py --headers-only
+
+PORT ?= /dev/ttyUSB0
+BAUD ?= 115200
+uart-log:
+	@echo "Capturando UART de $(PORT) a $(BAUD) baud para docs/uart_log.txt... (Ctrl+C para encerrar)"
+	@$(PYTHON) tools/capture_uart.py --port $(PORT) --baud $(BAUD) --out docs/uart_log.txt
 
 sim:
 	@echo "Compilando e executando testbench do acelerador (iverilog)..."

@@ -15,6 +15,8 @@ import subprocess
 
 class SoCWithDotProduct(ColorlightBaseSoC):
     def __init__(self, *args, **kwargs):
+        # Permite desabilitar SPI flash apenas em cenários específicos (ex.: geração de headers)
+        self._disable_spi_flash = kwargs.pop("disable_spi_flash", False)
         # Forçar uma CPU RISC-V padrão e UART
         kwargs.setdefault("cpu_type", "vexriscv")
         kwargs.setdefault("uart_name", "serial")
@@ -22,7 +24,9 @@ class SoCWithDotProduct(ColorlightBaseSoC):
         kwargs.setdefault("integrated_main_ram_size", 0x10000)
         # Habilita timer para compatibilidade com BIOS em builds completos
         kwargs.setdefault("with_timer", True)
-        # Disable LED chaser by default to avoid CSR name-extraction issues in some environments
+        # Workaround: desabilitar LedChaser por bug de extração de nome de CSR na versão atual
+        # do LiteX (CSRStorage sem nome explícito pode falhar em Python 3.12). Mantém-se os
+        # demais periféricos padrão do target.
         kwargs.setdefault("with_led_chaser", False)
 
         super().__init__(*args, **kwargs)
@@ -32,11 +36,15 @@ class SoCWithDotProduct(ColorlightBaseSoC):
         # Adiciona CSR para o periférico
         self.add_csr("dotp")
 
-    def add_spi_flash(self, *args, **kwargs):
-        # Override para desabilitar SPI flash (evita dependências e conflitos)
-        pass
-
     # Timer opcional: omitido aqui para facilitar geração de headers sem BIOS
+
+    # Override controlado: desabilita SPI flash apenas quando solicitado
+    def add_spi_flash(self, *args, **kwargs):
+        if self._disable_spi_flash:
+            # Ignora adição do SPI flash (workaround para bug de CSR em algumas versões)
+            return
+        # Caso contrário, delega para a implementação padrão do SoCCore
+        return SoCCore.add_spi_flash(self, *args, **kwargs)
 
 
 def main():
@@ -94,7 +102,14 @@ def main():
         _program_bitstream(bit)
         return
 
-    soc = SoCWithDotProduct(board=args.board, revision=args.revision, sys_clk_freq=args.sys_clk_freq, **parser.soc_argdict)
+    soc = SoCWithDotProduct(
+        board=args.board,
+        revision=args.revision,
+        sys_clk_freq=args.sys_clk_freq,
+        # Workaround: ao gerar apenas headers, desabilitar SPI flash para evitar bug de CSR
+        disable_spi_flash=args.headers_only,
+        **parser.soc_argdict,
+    )
     if args.headers_only:
         builder = Builder(soc, output_dir="build/dotp", csr_csv="build/dotp/csr.csv",
                           compile_software=False, compile_gateware=False)

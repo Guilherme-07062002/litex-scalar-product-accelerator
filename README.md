@@ -17,7 +17,7 @@ O projeto está organizado nos seguintes diretórios principais:
 
 1.  **Acelerador (`rtl/dot_product_accel.sv`)**: Módulo em SystemVerilog que calcula o produto escalar entre dois vetores de 8 elementos (32-bit signed). A operação leva 8 ciclos de clock e o resultado é um valor de 64 bits.
 2.  **Wrapper LiteX (`ip/dot_product_wrapper.py`)**: Uma classe Python que "envolve" o módulo SystemVerilog, expondo suas portas de entrada e saída como registradores no barramento CSR. É a ponte entre o hardware customizado e o ecossistema LiteX.
-3.  **SoC (`ip/soc_dot_product.py`)**: Script principal que define o SoC, baseado no target `colorlight_i5` do LiteX. Ele instancia a CPU, a memória e os periféricos padrão, e adiciona o acelerador de produto escalar como um novo periférico.
+3.  **SoC (`ip/soc_dot_product.py`)**: Script principal que define o SoC, baseado no target `colorlight_i5` do LiteX. Ele instancia a CPU, a memória e mantém os periféricos padrão do target (ex.: LED chaser, SPI flash), adicionando o acelerador de produto escalar como um novo periférico.
 4.  **Firmware (`ip/firmware_dotp.c`)**: Aplicação bare-metal em C que roda na CPU RISC-V. Ele inicializa a comunicação serial, calcula o produto escalar em software, depois usa o acelerador de hardware e, por fim, compara os dois resultados, imprimindo o status no terminal.
 
 ## Como Compilar e Executar
@@ -104,7 +104,9 @@ A comunicação entre a CPU e o acelerador `dotp` é feita pelos seguintes regis
 
 ## Log de Execução
 
-Abaixo, o log de saída esperado no terminal serial ao executar o firmware na placa ou através da simulação.
+Há dois modos de obter o log:
+
+1) Simulação (rápido): usando `ip/firmware_sim.py`, que emula os CSRs e imprime o mesmo fluxo do firmware real.
 
 ```text
 LiteX Dot-Product Accelerator Demo
@@ -113,6 +115,22 @@ Software: 0xFFFFFFFFFFFFFFF8
 Hardware: 0xFFFFFFFFFFFFFFF8
 [OK] Resultado coincide!
 ```
+
+2) UART real (recomendado para entrega): conecte-se via serial à placa para capturar a saída do firmware.
+
+Exemplo com picocom (Linux):
+
+```bash
+picocom -b 115200 /dev/ttyUSB0 --imap lfcrlf
+```
+
+Exemplo com minicom (Linux):
+
+```bash
+minicom -b 115200 -D /dev/ttyUSB0
+```
+
+Depois de carregar o bitstream e rodar o firmware, copie o texto exibido no terminal e salve como `docs/uart_log.txt` (ou faça um cast no asciinema e inclua o link no README).
 
 ## Referências
 
@@ -349,6 +367,8 @@ make -C ip CROSS_COMPILE=riscv32-unknown-elf-
 O Makefile procura os headers gerados em `build/dotp/software/include/generated` e compila `ip/firmware_dotp.c` em `ip/build/firmware.elf` e `ip/build/firmware.bin`.
 
 Execução: conectar via UART (serial) ao SoC; o firmware imprime os resultados de SW e HW e a verificação `[OK]`.
+
+Nota: Para cumprir o requisito "mantendo os periféricos já configurados", este SoC mantém o LED chaser e SPI flash do target. Caso seu ambiente não possua SPI flash conectado, o SoC continuará funcional; apenas ignore funcionalidades relacionadas ao flash.
 
 ### Log de Execução (exemplo esperado)
 
