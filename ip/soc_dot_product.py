@@ -6,7 +6,7 @@ from litex_boards.targets.colorlight_i5 import BaseSoC as ColorlightBaseSoC
 from litex.soc.integration.builder import Builder
 from litex.soc.integration.soc_core import SoCCore
 
-from .dot_product_wrapper import DotProductAccel
+from dot_product_wrapper import DotProductAccel
 
 
 class SoCWithDotProduct(ColorlightBaseSoC):
@@ -20,6 +20,8 @@ class SoCWithDotProduct(ColorlightBaseSoC):
         kwargs.setdefault("with_timer", False)
         # Disable LED chaser by default to avoid CSR name-extraction issues in some environments
         kwargs.setdefault("with_led_chaser", False)
+        # Disable SPI Flash to avoid CSR naming issues
+        kwargs.setdefault("integrated_rom_init", [])
 
         super().__init__(*args, **kwargs)
 
@@ -35,7 +37,7 @@ def main():
     from litex.build.parser import LiteXArgumentParser
     parser = LiteXArgumentParser(description="SoC Colorlight + Acelerador Produto Escalar")
     parser.add_target_argument("--board", default="i5")
-    parser.add_target_argument("--revision", default="7.2")
+    parser.add_target_argument("--revision", default="7.0")
     parser.add_target_argument("--sys-clk-freq", default=60e6, type=float)
     parser.add_target_argument("--build", action="store_true")
     parser.add_target_argument("--load", action="store_true")

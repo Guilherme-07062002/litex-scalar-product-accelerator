@@ -74,7 +74,7 @@ module tb_dot_product_accel;
     endtask
 
     initial begin
-        $dumpfile("../sim/dot_product_accel.vcd");
+        $dumpfile("sim/dot_product_accel.vcd");
         $dumpvars(0, tb_dot_product_accel);
         rst   = 1;
         start = 0;
