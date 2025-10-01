@@ -1,6 +1,7 @@
 # dot_product_wrapper.py
 # Wrapper LiteX/Migen para o módulo SystemVerilog dot_product_accel
 
+import os
 from migen import *
 from litex.gen import LiteXModule
 from litex.soc.interconnect.csr import CSRStorage, CSRStatus
@@ -72,8 +73,9 @@ class DotProductAccel(LiteXModule):
         clk   = ClockSignal()
         rst   = ResetSignal()
 
-        # Inclui o arquivo SystemVerilog ao projeto
-        platform.add_source("rtl/dot_product_accel.sv")
+        # Inclui o arquivo SystemVerilog ao projeto (caminho robusto)
+        rtl_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "rtl", "dot_product_accel.sv"))
+        platform.add_source(rtl_path)
 
         # Instancia o módulo SV
         self.specials += Instance("dot_product_accel",

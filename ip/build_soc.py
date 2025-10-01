@@ -21,11 +21,9 @@ def main():
     # Import here to avoid hard dependency if user only wants other features
     try:
         from soc_dot_product import SoCWithDotProduct
-        from litex.build.tools import subprocess_call
     except Exception as e:
-        print("Erro ao importar LiteX or SoC module. Verifique se o ambiente tem LiteX instalado.")
-        print(e)
-        sys.exit(1)
+        print("Erro ao importar LiteX ou o módulo SoC. Verifique se o ambiente tem LiteX e litex-boards instalados.")
+        raise
 
     soc = SoCWithDotProduct(cpu_type=args.cpu_type, sys_clk_freq=args.sys_clk_freq)
 
