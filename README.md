@@ -59,12 +59,55 @@ Arquivos principais:
 - `ip/soc_dot_product.py`: SoC baseado no target Colorlight i5, adiciona o periférico e gera `csr.h` para o firmware.
 - `ip/firmware_dotp.c`: firmware em C que escreve os vetores, aciona `start`, espera `done` e lê `result` (comparando com software).
 
+### Como rodar (Makefile)
+
+- Testbench do acelerador (RTL):
+
+```
+make sim
+```
+
+- Gerar apenas os headers/CSRs (sem sintetizar gateware):
+
+```
+make headers-only PYTHON=.venv/bin/python
+```
+
+- Compilar o firmware com a toolchain local do repositório:
+
+```
+make -C ip CROSS_COMPILE=../tools/bin/riscv32-unknown-elf- all
+```
+
+- (Opcional) Construir o SoC e gateware (requer yosys/nextpnr/prjtrellis):
+
+```
+make build-soc PYTHON=.venv/bin/python
+```
+
+- (Opcional) Simular o firmware end-to-end sem FPGA:
+
+```
+.venv/bin/python ip/firmware_sim.py
+```
+
 ### Mapa de CSR (resumo)
 
 Base do periférico: definida automaticamente pelo LiteX; ver `build/dotp/csr.csv`.
 
 - write: `dotp_a0..a7`, `dotp_b0..b7`, `dotp_start`.
 - read:  `dotp_done.done`, `dotp_result_lo`, `dotp_result_hi`.
+
+Endereços (exemplo gerado neste projeto):
+
+- Base CSR: `0xF0000000`
+- Offsets:
+	- `a0..a7`  → `0x00 .. 0x1C`
+	- `b0..b7`  → `0x20 .. 0x3C`
+	- `start`   → `0x40`
+	- `done`    → `0x44`
+	- `result_lo` → `0x48`
+	- `result_hi` → `0x4C`
 
 ### Requisitos/Dependências
 
@@ -137,6 +180,14 @@ Para carregar (quando suportado no ambiente):
 python ip/soc_dot_product.py --load
 ```
 
+Target/revisão (conforme aulas): para usar Colorlight i9 rev 7.2, execute com:
+
+```bash
+.venv/bin/python ip/soc_dot_product.py --headers-only --board i9 --revision 7.2
+# Para build completo (requer ferramentas FPGA):
+.venv/bin/python ip/soc_dot_product.py --build --board i9 --revision 7.2
+```
+
 ### Compilar/rodar firmware
 
 Após o build do SoC, use o Makefile em `ip/` para compilar o firmware. Exemplo:
@@ -160,6 +211,12 @@ Hardware: 0xFFFFFFFFFFFFFFF8
 ```
 
 Obs.: os valores dependem dos vetores de teste no firmware.
+
+Você pode gerar um log formatado para anexar no relatório com:
+
+```bash
+python3 execution_log.py
+```
 
 ## Referências
 
