@@ -154,8 +154,8 @@ Execução: conectar via UART (serial) ao SoC; o firmware imprime os resultados 
 ```text
 LiteX Dot-Product Accelerator Demo
 CPU: VexRiscv
-Software:  <valor>
-Hardware:  <valor>
+Software: 0xFFFFFFFFFFFFFFF8
+Hardware: 0xFFFFFFFFFFFFFFF8
 [OK] Resultado coincide!
 ```
 

@@ -20,7 +20,7 @@ def main():
 
     # Import here to avoid hard dependency if user only wants other features
     try:
-        from ip.soc_dot_product import SoCWithDotProduct
+        from soc_dot_product import SoCWithDotProduct
         from litex.build.tools import subprocess_call
     except Exception as e:
         print("Erro ao importar LiteX or SoC module. Verifique se o ambiente tem LiteX instalado.")

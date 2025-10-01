@@ -22,8 +22,13 @@ class SoCWithDotProduct(ColorlightBaseSoC):
         kwargs.setdefault("with_led_chaser", False)
         # Disable SPI Flash to avoid CSR naming issues
         kwargs.setdefault("integrated_rom_init", [])
+        kwargs.setdefault("with_spi_flash", False)
 
         super().__init__(*args, **kwargs)
+
+    def add_spi_flash(self, *args, **kwargs):
+        # Override to disable SPI flash
+        pass
 
         # Instancia e adiciona o acelerador
         self.dotp = DotProductAccel(self.platform, sys_clk_freq=int(kwargs.get("sys_clk_freq", 60e6)))
