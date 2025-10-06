@@ -4,8 +4,10 @@
 
 CROSS_COMPILE ?= riscv32-unknown-elf-
 PYTHON ?= python
+BOARD ?= i9
+REVISION ?= 7.2
 
-.PHONY: help build-soc headers-only sim firmware build-all clean load prog-only
+.PHONY: help build-soc firmware build-all clean csr-table
 
 help:
 	@echo "Makefile de alto nível para este projeto"
@@ -22,31 +24,9 @@ help:
 
 build-soc:
 	@echo "Verificando se LiteX está disponível..."
-	@$(PYTHON) -c "import litex; print('LiteX disponível')" || (echo "LiteX não encontrado. Instale litex no seu ambiente."; exit 1)
-	@echo "Iniciando build do SoC (ip/soc_dot_product.py --build --sys-clk-freq 50e6)"
-	@$(PYTHON) ip/soc_dot_product.py --build --sys-clk-freq 50e6
-
-load:
-	@echo "Programando bitstream (openFPGALoader/ecpprog)..."
-	@$(PYTHON) ip/soc_dot_product.py --prog-only
-
-prog-only: load
-
-headers-only:
-	@echo "Gerando apenas headers/CSRs (sem gateware)..."
-	@$(PYTHON) ip/soc_dot_product.py --headers-only
-
-PORT ?= /dev/ttyUSB0
-BAUD ?= 115200
-uart-log:
-	@echo "Capturando UART de $(PORT) a $(BAUD) baud para docs/uart_log.txt... (Ctrl+C para encerrar)"
-	@$(PYTHON) tools/capture_uart.py --port $(PORT) --baud $(BAUD) --out docs/uart_log.txt
-
-sim:
-	@echo "Compilando e executando testbench do acelerador (iverilog)..."
-	@mkdir -p sim
-	@iverilog -g2012 -o sim/dot_product_accel.vvp rtl/dot_product_accel.sv tb/tb_dot_product_accel.sv
-	@vvp sim/dot_product_accel.vvp
+	@$(PYTHON) -c "import sys,pkgutil; (sys.exit('LiteX não encontrado. Instale litex no seu ambiente.') if pkgutil.find_loader('litex') is None else print('LiteX disponível'))"
+	@echo "Iniciando build do SoC (ip/build_soc.py --build)"
+	@$(PYTHON) ip/build_soc.py --board $(BOARD) --revision $(REVISION) --build
 
 firmware:
 	@echo "Compilando firmware (ip/Makefile)..."
@@ -57,3 +37,7 @@ build-all: build-soc firmware
 
 clean:
 	@$(MAKE) -C ip clean || true
+
+csr-table:
+	@echo "Gerando tabela de CSRs (dotp) a partir de build/dotp/csr.csv..."
+	@$(PYTHON) ip/gen_csr_table.py > build/dotp/csr_table.md || (echo "Falha ao gerar tabela. Verifique se csr.csv existe."; exit 1)

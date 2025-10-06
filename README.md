@@ -322,10 +322,14 @@ source tools/oss-cad-suite/environment
 
 Um script auxiliar foi adicionado para facilitar o build do SoC e a geração dos headers: `ip/build_soc.py`.
 
-Exemplo (ambiente com LiteX instalado):
+Exemplos (ambiente com LiteX instalado):
 
 ```bash
-python ip/build_soc.py --build
+# Alvo i9 v7.2 (recomendado nas aulas)
+python ip/build_soc.py --board i9 --revision 7.2 --build
+
+# Alternativa chamando diretamente o SoC
+python ip/soc_dot_product.py --board i9 --revision 7.2 --build
 ```
 
 Saídas relevantes esperadas:
@@ -352,8 +356,13 @@ Target/revisão (conforme aulas): o padrão é Colorlight i9 rev 7.2. Para mudar
 Clock padrão do SoC: 50 MHz. Para alterar via CLI:
 
 ```bash
-.venv/bin/python ip/soc_dot_product.py --build --sys-clk-freq 60e6
+python ip/soc_dot_product.py --board i9 --revision 7.2 --load
 ```
+
+Ou para carregar apenas o firmware via terminal do LiteX (ajuste a porta serial):
+
+```bash
+litex_term /dev/ttyUSB0 --kernel ip/build/firmware.bin
 ```
 
 ### Compilar/rodar firmware
@@ -368,7 +377,14 @@ O Makefile procura os headers gerados em `build/dotp/software/include/generated`
 
 Execução: conectar via UART (serial) ao SoC; o firmware imprime os resultados de SW e HW e a verificação `[OK]`.
 
-Nota: Para cumprir o requisito "mantendo os periféricos já configurados", este SoC mantém o LED chaser e SPI flash do target. Caso seu ambiente não possua SPI flash conectado, o SoC continuará funcional; apenas ignore funcionalidades relacionadas ao flash.
+### Gerar tabela de CSRs para o README
+
+Após o build do SoC, você pode gerar uma tabela Markdown com os CSRs do periférico para incluir na documentação:
+
+```bash
+make csr-table
+cat build/dotp/csr_table.md
+```
 
 ### Log de Execução (exemplo esperado)
 
@@ -380,40 +396,7 @@ Hardware: 0xFFFFFFFFFFFFFFF8
 [OK] Resultado coincide!
 ```
 
-Obs.: os valores dependem dos vetores de teste no firmware.
-
-Você pode gerar um log formatado para anexar no relatório com:
-
-```bash
-python3 execution_log.py
-```
-
-## Troubleshooting
-
-- Ferramentas FPGA ausentes (yosys/nextpnr/prjtrellis):
-	- Sintomas: erro ao iniciar síntese/place&route; mensagens indicando executáveis não encontrados.
-	- Ação: instale a toolchain ECP5 open-source conforme links em "Requisitos/Dependências". Verifique se `yosys`, `nextpnr-ecp5` e `ecppack` (prjtrellis) estão no PATH.
-
-- Erro de BIOS/timer0 ao compilar software no LiteX:
-	- Sintomas: mensagens como "BIOS needs timer0 peripheral" durante a fase de software.
-	- Ação: neste projeto, o build de gateware está configurado com `compile_software=False` para evitar essa dependência. Caso deseje compilar BIOS/software, garanta `with_timer=True` no SoC e um ambiente completo de software do LiteX.
-
-- Carregar bitstream (`--load`/`--prog-only`) falha:
-	- Sintomas: erro informando que `openFPGALoader`/`ecpprog` não está no PATH, ou bitstream não encontrado.
-	- Ação: instale uma das ferramentas e garanta que está no PATH. Use `--loader ecpprog` para alternar, e `--bitstream <caminho>` para escolher o arquivo explicitamente.
-
-- Revisão/board incorretos (Colorlight i5/i9):
-	- Sintomas: falhas de pinos/constraints ou erros de plataforma.
-	- Ação: especifique corretamente `--board` e `--revision` (ex.: `--board i9 --revision 7.2`). O padrão é i5 rev 7.0.
-
-- Cabeçalhos `csr.h` não encontrados ao compilar o firmware:
-	- Sintomas: erro no Makefile de `ip/` avisando que os headers não existem.
-	- Ação: rode `make headers-only` ou `make build-soc` antes de `make -C ip`. Verifique se `build/dotp/software/include/generated/csr.h` foi gerado.
-
-- Toolchain RISC-V:
-	- Sintomas: `riscv32-unknown-elf-gcc` não encontrado.
-	- Ação: instale uma toolchain RISC-V ou use a fornecida localmente (ajuste `CROSS_COMPILE`). Há um toolchain de exemplo em `tools/bin/` com wrappers; você pode compilar com `make -C ip CROSS_COMPILE=../tools/bin/riscv32-unknown-elf-`.
-
+Obs.: os valores dependem dos vetores de teste no firmware. Para pontuar a seção de resultados, inclua um log UART real (texto ou asciinema) da execução do firmware.
 
 ## Referências
 

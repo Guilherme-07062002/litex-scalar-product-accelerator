@@ -1,45 +1,87 @@
-// firmware_dotp.c - Firmware bare-metal para interagir com o acelerador de produto escalar via CSR
-#include <stdint.h>
-#include <stdbool.h>
-
-// Headers gerados pelo LiteX durante o build (--headers-only já gera estes arquivos)
-#include <csr.h>
-#include <soc.h>
-
-// UART mínimo (usa o periférico UART do LiteX)
-#ifndef CSR_UART_BASE
-__attribute__((weak)) int uart_txfull_read(void) { return 0; }
-__attribute__((weak)) void uart_rxtx_write(uint8_t c) { (void)c; }
+// firmware_dotp.c - Firmware para interagir com o acelerador de produto escalar via CSR
+#if defined(__has_include)
+  #if __has_include(<stdio.h>)
+    #include <stdio.h>
+  #else
+    /* Minimal declarations to satisfy IntelliSense or builds without system headers */
+    int printf(const char *format, ...);
+    int puts(const char *s);
+    int putchar(int c);
+  #endif
+#else
+  /* Fallback when __has_include is not available */
+  int printf(const char *format, ...);
+  int puts(const char *s);
+  int putchar(int c);
 #endif
-static inline void uart_write_char(char c) {
-    // Aguarda espaço no TX
-    while (uart_txfull_read());
-    uart_rxtx_write((uint8_t)c);
-}
+#if defined(__has_include)
+  #if __has_include(<stdint.h>)
+    #include <stdint.h>
+  #else
+    /* Minimal fixed-width integer types when <stdint.h> is not available */
+    typedef signed char int8_t;
+    typedef short int16_t;
+    typedef int int32_t;
+    typedef long long int64_t;
+    typedef unsigned char uint8_t;
+    typedef unsigned short uint16_t;
+    typedef unsigned int uint32_t;
+    typedef unsigned long long uint64_t;
+  #endif
 
-static void uart_write_str(const char* s) {
-    while (*s) {
-        if (*s == '\n') uart_write_char('\r');
-        uart_write_char(*s++);
-    }
-}
+  #if __has_include(<stdbool.h>)
+    #include <stdbool.h>
+  #else
+    /* Minimal bool type when <stdbool.h> is not available */
+    typedef enum { false = 0, true = 1 } bool;
+  #endif
+#else
+  /* Fallback definitions for toolchains without __has_include */
+  typedef signed char int8_t;
+  typedef short int16_t;
+  typedef int int32_t;
+  typedef long long int64_t;
+  typedef unsigned char uint8_t;
+  typedef unsigned short uint16_t;
+  typedef unsigned int uint32_t;
+  typedef unsigned long long uint64_t;
+  typedef enum { false = 0, true = 1 } bool;
+#endif
 
-__attribute__((unused)) static void uart_write_hex32(uint32_t v) {
-    static const char* hex = "0123456789ABCDEF";
-    uart_write_str("0x");
-    for (int i = 7; i >= 0; --i) {
-        uart_write_char(hex[(v >> (i*4)) & 0xF]);
-    }
-}
+// Os headers csr.h e system.h serão gerados pelo LiteX durante o build.
+#if defined(__has_include) && __has_include(<generated/csr.h>) && __has_include(<generated/soc.h>)
+  #include <generated/csr.h>
+  #include <generated/soc.h>
+#else
+  /* Fallback stubs when LiteX generated headers are not available.
+     These stubs allow local compilation and basic testing; replace them
+     with the actual LiteX-generated headers for real hardware. */
 
-static void uart_write_hex64(uint64_t v) {
-    uint32_t hi = (uint32_t)(v >> 32);
-    uint32_t lo = (uint32_t)(v & 0xFFFFFFFFu);
-    uart_write_str("0x");
-    static const char* hex = "0123456789ABCDEF";
-    for (int i = 7; i >= 0; --i) uart_write_char(hex[(hi >> (i*4)) & 0xF]);
-    for (int i = 7; i >= 0; --i) uart_write_char(hex[(lo >> (i*4)) & 0xF]);
-}
+  #ifndef CPU_DESCRIPTION
+  #define CPU_DESCRIPTION "Unknown-CPU (stub)"
+  #endif
+
+  #ifndef DOTP_STUBS_DEFINED
+  #define DOTP_STUBS_DEFINED
+
+  /* Vector write stubs */
+  static inline void dotp_a0_write(int32_t v) { (void)v; } static inline void dotp_a1_write(int32_t v) { (void)v; }
+  static inline void dotp_a2_write(int32_t v) { (void)v; } static inline void dotp_a3_write(int32_t v) { (void)v; }
+  static inline void dotp_a4_write(int32_t v) { (void)v; } static inline void dotp_a5_write(int32_t v) { (void)v; }
+  static inline void dotp_a6_write(int32_t v) { (void)v; } static inline void dotp_a7_write(int32_t v) { (void)v; }
+  static inline void dotp_b0_write(int32_t v) { (void)v; } static inline void dotp_b1_write(int32_t v) { (void)v; }
+  static inline void dotp_b2_write(int32_t v) { (void)v; } static inline void dotp_b3_write(int32_t v) { (void)v; }
+  static inline void dotp_b4_write(int32_t v) { (void)v; } static inline void dotp_b5_write(int32_t v) { (void)v; }
+  static inline void dotp_b6_write(int32_t v) { (void)v; } static inline void dotp_b7_write(int32_t v) { (void)v; }
+
+  /* Control/result stubs */
+  static inline void dotp_start_write(uint32_t v) { (void)v; }
+  static inline uint32_t dotp_done_read(void) { return 1U; } /* pretend hardware is immediately done */
+  static inline uint32_t dotp_result_lo_read(void) { return 0U; }
+  static inline uint32_t dotp_result_hi_read(void) { return 0U; }
+
+  #endif /* DOTP_STUBS_DEFINED */
+#endif
 
 static int64_t sw_dotp(const int32_t a[8], const int32_t b[8]) {
     int64_t acc = 0;
@@ -65,6 +107,8 @@ static void hw_start() {
 }
 
 static bool hw_done() {
+    // Nota: o nome gerado pelo LiteX para leitura de um CSRStatus(1, name="done")
+    // normalmente é dotp_done_read(). Ajuste aqui caso seu csr.h gere um nome diferente.
     return dotp_done_read();
 }
 
