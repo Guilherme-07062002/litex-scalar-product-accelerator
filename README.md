@@ -120,10 +120,14 @@ Para simplificar, consulte também os guias de instalação do LiteX e litex-boa
 
 Um script auxiliar foi adicionado para facilitar o build do SoC e a geração dos headers: `ip/build_soc.py`.
 
-Exemplo (ambiente com LiteX instalado):
+Exemplos (ambiente com LiteX instalado):
 
 ```bash
-python ip/build_soc.py --build
+# Alvo i9 v7.2 (recomendado nas aulas)
+python ip/build_soc.py --board i9 --revision 7.2 --build
+
+# Alternativa chamando diretamente o SoC
+python ip/soc_dot_product.py --board i9 --revision 7.2 --build
 ```
 
 Saídas relevantes esperadas:
@@ -134,7 +138,13 @@ Saídas relevantes esperadas:
 Para carregar (quando suportado no ambiente):
 
 ```bash
-python ip/soc_dot_product.py --load
+python ip/soc_dot_product.py --board i9 --revision 7.2 --load
+```
+
+Ou para carregar apenas o firmware via terminal do LiteX (ajuste a porta serial):
+
+```bash
+litex_term /dev/ttyUSB0 --kernel ip/build/firmware.bin
 ```
 
 ### Compilar/rodar firmware
@@ -149,6 +159,15 @@ O Makefile procura os headers gerados em `build/dotp/software/include/generated`
 
 Execução: conectar via UART (serial) ao SoC; o firmware imprime os resultados de SW e HW e a verificação `[OK]`.
 
+### Gerar tabela de CSRs para o README
+
+Após o build do SoC, você pode gerar uma tabela Markdown com os CSRs do periférico para incluir na documentação:
+
+```bash
+make csr-table
+cat build/dotp/csr_table.md
+```
+
 ### Log de Execução (exemplo esperado)
 
 ```text
@@ -159,7 +178,7 @@ Hardware:  <valor>
 [OK] Resultado coincide!
 ```
 
-Obs.: os valores dependem dos vetores de teste no firmware.
+Obs.: os valores dependem dos vetores de teste no firmware. Para pontuar a seção de resultados, inclua um log UART real (texto ou asciinema) da execução do firmware.
 
 ## Referências
 
