@@ -1,30 +1,56 @@
-/* Linker script mínimo para firmware RISC-V (32-bit, ilp32)
-   Ajuste conforme sua toolchain/board. Coloca .text em 0x10000000 por convenção LiteX
-*/
+INCLUDE generated/output_format.ld
 ENTRY(_start)
+
+__DYNAMIC = 0;
+
+INCLUDE generated/regions.ld
 
 SECTIONS
 {
-  /* SRAM base conforme regiões padrão do LiteX deste SoC */
-  . = 0x10000000;
+    .text :
+    {
+        _ftext = .;
+        *(.text .stub .text.* .gnu.linkonce.t.*)
+        _etext = .;
+    } > main_ram
 
-  .init : { KEEP(*(.init)) }
+    .rodata :
+    {
+        . = ALIGN(4);
+        _frodata = .;
+        *(.rodata .rodata.* .gnu.linkonce.r.*)
+        *(.rodata1)
+        _erodata = .;
+    } > main_ram
 
-  .text : {
-    KEEP(*(.text*))
-    KEEP(*(.rodata*))
-  }
+    .data :
+    {
+        . = ALIGN(4);
+        _fdata = .;
+        *(.data .data.* .gnu.linkonce.d.*)
+        *(.data1)
+        _gp = ALIGN(16);
+        *(.sdata .sdata.* .gnu.linkonce.s.*)
+        _edata = .;
+    } > main_ram
 
-  .data : {
-    KEEP(*(.data*))
-  }
-
-  .bss : {
-    . = ALIGN(4);
-    KEEP(*(.bss*))
-    KEEP(*(COMMON))
-  }
-
-  . = ALIGN(8);
-  _stack_top = . + 0x2000; /* 8 KiB de stack por padrão */
+    .bss :
+    {
+        . = ALIGN(4);
+        _fbss = .;
+        *(.dynsbss)
+        *(.sbss .sbss.* .gnu.linkonce.sb.*)
+        *(.scommon)
+        *(.dynbss)
+        *(.bss .bss.* .gnu.linkonce.b.*)
+        *(COMMON)
+        . = ALIGN(4);
+        _ebss = .;
+        _end = .;
+    } > sram
 }
+
+PROVIDE(_fstack = ORIGIN(sram) + LENGTH(sram) - 4);
+
+PROVIDE(_fdata_rom = LOADADDR(.data));
+PROVIDE(_edata_rom = LOADADDR(.data) + SIZEOF(.data));

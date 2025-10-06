@@ -45,19 +45,20 @@ make sim
 
 Este comando executa o testbench (`tb/`) e gera um arquivo de ondas (`sim/dot_product_accel.vcd`) para análise.
 
-#### 2. Gerar Headers e Compilar o Firmware
+#### 2. Gerar Headers/Libs e Compilar o Firmware
 
 Antes de compilar o firmware, é preciso gerar os headers C com o mapa de registradores do SoC:
 
 ```bash
-# Gera build/dotp/software/include/generated/csr.h
+# Gera build/dotp/software/include/generated (csr.h, variables.mak, etc.)
+# e bibliotecas de software do LiteX necessárias para linkar o firmware
 make headers-only
 ```
 
 Com os headers gerados, compile o firmware:
 
 ```bash
-# Usa a toolchain em tools/bin para compilar o firmware
+# Compila o firmware usando a infraestrutura de software do LiteX
 make -C ip CROSS_COMPILE=../tools/bin/riscv32-unknown-elf- all
 ```
 
@@ -362,24 +363,24 @@ python ip/soc_dot_product.py --board i9 --revision 7.2 --load
 Ou para carregar apenas o firmware via terminal do LiteX (ajuste a porta serial):
 
 ```bash
-litex_term /dev/ttyUSB0 --kernel ip/build/firmware.bin
+litex_term /dev/ttyUSB0 --kernel ip/firmware.bin
 ```
 
 ### Compilar/rodar firmware
 
-Após o build do SoC, use o Makefile em `ip/` para compilar o firmware. Exemplo:
+Após o build do SoC (ou após `make headers-only`), use o Makefile em `ip/` para compilar o firmware. Exemplo:
 
 ```bash
 make -C ip CROSS_COMPILE=riscv32-unknown-elf-
 ```
 
-O Makefile procura os headers gerados em `build/dotp/software/include/generated` e compila `ip/firmware_dotp.c` em `ip/build/firmware.elf` e `ip/build/firmware.bin`.
+O Makefile procura os headers/bibliotecas gerados em `build/dotp/software/include/generated` e produz `ip/firmware.elf` e `ip/firmware.bin`.
 
 Execução: conectar via UART (serial) ao SoC; o firmware imprime os resultados de SW e HW e a verificação `[OK]`.
 
-### Gerar tabela de CSRs para o README
+### Gerar/Referenciar a tabela de CSRs
 
-Após o build do SoC, você pode gerar uma tabela Markdown com os CSRs do periférico para incluir na documentação:
+Após o build do SoC, você pode gerar uma tabela Markdown com os CSRs do periférico e referenciá-la na documentação:
 
 ```bash
 make csr-table

@@ -112,15 +112,15 @@ def main():
     )
     if args.headers_only:
         builder = Builder(soc, output_dir="build/dotp", csr_csv="build/dotp/csr.csv",
-                          compile_software=False, compile_gateware=False)
+                          compile_software=True, compile_gateware=False)
         # Finaliza o SoC e gera headers/CSRs diretamente, sem gateware/BIOS
         soc.finalize()
         builder._generate_includes(with_bios=False)
         builder._generate_csr_map()
         return
     else:
-        # Evita compilar BIOS/software durante a síntese de gateware para não exigir timer0
-        builder = Builder(soc, output_dir="build/dotp", csr_csv="build/dotp/csr.csv", compile_software=False)
+        # Compila software para gerar headers/libs necessários ao firmware
+        builder = Builder(soc, output_dir="build/dotp", csr_csv="build/dotp/csr.csv", compile_software=True)
         builder.build(run=args.build)
         if args.load:
             bit = _detect_bitstream(builder.gateware_dir if hasattr(builder, "gateware_dir") else default_gateware_dir)

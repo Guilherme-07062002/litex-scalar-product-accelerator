@@ -52,10 +52,13 @@
 #if defined(__has_include) && __has_include(<generated/csr.h>) && __has_include(<generated/soc.h>)
   #include <generated/csr.h>
   #include <generated/soc.h>
+  #if __has_include(<libbase/console.h>)
+    #include <libbase/console.h>
+  #endif
 #else
   /* Fallback stubs when LiteX generated headers are not available.
-     These stubs allow local compilation and basic testing; replace them
-     with the actual LiteX-generated headers for real hardware. */
+    These stubs allow local compilation and basic testing; replace them
+    with the actual LiteX-generated headers for real hardware. */
 
   #ifndef CPU_DESCRIPTION
   #define CPU_DESCRIPTION "Unknown-CPU (stub)"
@@ -97,13 +100,13 @@ static void hw_write_vectors(const int32_t a[8], const int32_t b[8]) {
 }
 
 static void hw_start() {
-    // Gera um pulso em 'start' para evitar reexecuções involuntárias
-    // Caso o bit fique em nível alto até o DONE, o hardware poderia reiniciar
-    // automaticamente uma nova operação. Portanto, pulse e depois limpe.
-    dotp_start_write(1);
-    // Pequeno atraso para garantir pelo menos 1-2 ciclos de clock do SoC
-    for (volatile int i = 0; i < 16; ++i) { /* noop */ }
-    dotp_start_write(0);
+  // Gera um pulso em 'start' para evitar reexecuções involuntárias
+  // Caso o bit fique em nível alto até o DONE, o hardware poderia reiniciar
+  // automaticamente uma nova operação. Portanto, pulse e depois limpe.
+  dotp_start_write(1);
+  // Pequeno atraso para garantir pelo menos 1-2 ciclos de clock do SoC
+  for (volatile int i = 0; i < 16; ++i) { /* noop */ }
+  dotp_start_write(0);
 }
 
 static bool hw_done() {
@@ -119,8 +122,8 @@ static int64_t hw_result() {
 }
 
 int main(void) {
-    uart_write_str("\nLiteX Dot-Product Accelerator Demo\n");
-    uart_write_str("CPU: "); uart_write_str(CPU_DESCRIPTION); uart_write_str("\n");
+  printf("\nLiteX Dot-Product Accelerator Demo\n");
+  printf("CPU: %s\n", CPU_DESCRIPTION);
 
     // Vetores de teste
     int32_t A[8] = {1, -2, 3, -4, 5, -6, 7, -8};
@@ -128,21 +131,19 @@ int main(void) {
 
     // Software
     int64_t sw = sw_dotp(A, B);
-    uart_write_str("Software: "); uart_write_hex64((uint64_t)sw); uart_write_str("\n");
+  printf("Software: 0x%016llX\n", (unsigned long long)sw);
 
     // Hardware
     hw_write_vectors(A, B);
     hw_start();
-    while (!hw_done());
-    int64_t hw = hw_result();
-    uart_write_str("Hardware: "); uart_write_hex64((uint64_t)hw); uart_write_str("\n");
+  while (!hw_done());
+  int64_t hw = hw_result();
+  printf("Hardware: 0x%016llX\n", (unsigned long long)hw);
 
-    if (hw == sw) uart_write_str("[OK] Resultado coincide!\n");
-    else           uart_write_str("[ERRO] Resultado diferente!\n");
+  if (hw == sw) printf("[OK] Resultado coincide!\n");
+  else          printf("[ERRO] Resultado diferente!\n");
 
     // Loop simples para observar via UART
-    while (1) {
-        // Nada, poderia aguardar comandos via UART futuramente
-    }
+  while (1) { /* idle */ }
     return 0;
 }
