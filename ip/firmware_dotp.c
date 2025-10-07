@@ -55,6 +55,8 @@
   #if __has_include(<libbase/console.h>)
     #include <libbase/console.h>
   #endif
+  /* Define um alias para o nome da CPU fornecido pelo LiteX */
+  #define CPU_NAME_STR config_cpu_human_name_read()
 #else
   /* Fallback stubs when LiteX generated headers are not available.
     These stubs allow local compilation and basic testing; replace them
@@ -63,6 +65,7 @@
   #ifndef CPU_DESCRIPTION
   #define CPU_DESCRIPTION "Unknown-CPU (stub)"
   #endif
+  #define CPU_NAME_STR CPU_DESCRIPTION
 
   #ifndef DOTP_STUBS_DEFINED
   #define DOTP_STUBS_DEFINED
@@ -123,7 +126,7 @@ static int64_t hw_result() {
 
 int main(void) {
   printf("\nLiteX Dot-Product Accelerator Demo\n");
-  printf("CPU: %s\n", CPU_DESCRIPTION);
+  printf("CPU: %s\n", CPU_NAME_STR);
 
     // Vetores de teste
     int32_t A[8] = {1, -2, 3, -4, 5, -6, 7, -8};

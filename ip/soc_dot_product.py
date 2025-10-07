@@ -22,8 +22,8 @@ class SoCWithDotProduct(ColorlightBaseSoC):
         kwargs.setdefault("uart_name", "serial")
         kwargs.setdefault("integrated_rom_size", 0x8000)
         kwargs.setdefault("integrated_main_ram_size", 0x10000)
-        # Habilita timer para compatibilidade com BIOS em builds completos
-        kwargs.setdefault("with_timer", True)
+        # Garante timer para compatibilidade com BIOS e geração de software
+        kwargs["with_timer"] = True
         # Workaround: desabilitar LedChaser por bug de extração de nome de CSR na versão atual
         # do LiteX (CSRStorage sem nome explícito pode falhar em Python 3.12). Mantém-se os
         # demais periféricos padrão do target.
@@ -61,6 +61,7 @@ def main():
     parser.add_argument("--bitstream", default=None, help="Caminho para o bitstream (.bit/.svf); se omitido, detecta em build/dotp/gateware")
     # Gera apenas headers/CSRs e artefatos de software, sem sintetizar gateware
     parser.add_argument("--headers-only", action="store_true", help="Gerar apenas headers/CSRs (sem build de gateware)")
+    parser.add_argument("--no-spiflash", action="store_true", help="Desabilita SPI flash onboard (workaround para bug de CSR em algumas versões)")
     args = parser.parse_args()
 
     def _detect_bitstream(default_gateware_dir: str) -> str:
@@ -106,17 +107,15 @@ def main():
         board=args.board,
         revision=args.revision,
         sys_clk_freq=args.sys_clk_freq,
-        # Workaround: ao gerar apenas headers, desabilitar SPI flash para evitar bug de CSR
-        disable_spi_flash=args.headers_only,
+        # Workaround: desabilitar SPI flash quando solicitado ou em headers-only
+        disable_spi_flash=(args.headers_only or args.no_spiflash),
         **parser.soc_argdict,
     )
     if args.headers_only:
         builder = Builder(soc, output_dir="build/dotp", csr_csv="build/dotp/csr.csv",
                           compile_software=True, compile_gateware=False)
-        # Finaliza o SoC e gera headers/CSRs diretamente, sem gateware/BIOS
-        soc.finalize()
-        builder._generate_includes(with_bios=False)
-        builder._generate_csr_map()
+        # Gera includes/CSRs e compila bibliotecas de software (sem gateware)
+        builder.build(run=False)
         return
     else:
         # Compila software para gerar headers/libs necessários ao firmware
