@@ -5,6 +5,7 @@ Simulador do firmware para testar a lógica de comunicação CSR
 """
 
 import sys
+import time
 
 # Simular registradores CSR como dicionário global
 csr_regs = {}
@@ -184,8 +185,11 @@ def main():
     print(f"   B = {B}")
 
     # Software
+    sw_start = time.perf_counter()
     sw = sw_dotp(A, B)
+    sw_elapsed = time.perf_counter() - sw_start
     uart_write_str("Software: "); uart_write_hex64(sw & 0xFFFFFFFFFFFFFFFF); uart_write_str("\n")
+    uart_write_str("Software time (wall): "); uart_write_str(f"{sw_elapsed*1e6:.2f} us\n")
 
     # Hardware
     print(f"\n⚙️  Executando no acelerador...")
@@ -194,14 +198,42 @@ def main():
     hw_start(accel)
     
     # Simular ciclos até done (o start já foi limpo dentro de hw_start)
-    max_cycles = 20
+    # Medir tempo de hardware em ciclos e também wall-clock (simulado)
+    hw_wall_start = time.perf_counter()
+    max_cycles = 1024
     for cycle in range(max_cycles):
         if hw_done():
             break
         accel.tick()
+    hw_wall_elapsed = time.perf_counter() - hw_wall_start
+    # ciclos efetivos do acelerador
+    hw_cycles = accel.cycle_count
+    # Converter ciclos em tempo assumindo frequência do SoC (padrão 50 MHz)
+    CLOCK_FREQ_HZ = 50e6
+    hw_time_from_cycles = hw_cycles / CLOCK_FREQ_HZ
     
     hw = hw_result()
     uart_write_str("Hardware: "); uart_write_hex64(hw & 0xFFFFFFFFFFFFFFFF); uart_write_str("\n")
+
+    # Mostrar tempos e ciclos
+    uart_write_str("Hardware cycles: "); uart_write_str(f"{hw_cycles}\n")
+    uart_write_str("Hardware time (from cycles): "); uart_write_str(f"{hw_time_from_cycles*1e6:.2f} us\n")
+    uart_write_str("Hardware time (wall): "); uart_write_str(f"{hw_wall_elapsed*1e6:.2f} us\n")
+
+    # Calcular speedup: quanto mais rápido o hardware é em relação ao software
+    # Usa-se como referência o tempo de software medido (sw_elapsed, em segundos)
+    if hw_time_from_cycles > 0:
+        speedup_cycles = sw_elapsed / hw_time_from_cycles
+        uart_write_str("Speedup (software / hw cycles): "); uart_write_str(f"{speedup_cycles:.2f}x\n")
+    else:
+        uart_write_str("Speedup (software / hw cycles): inf\n")
+
+    # Comparação com base no tempo wall-clock da simulação (menos representativo do hardware real)
+    if hw_wall_elapsed > 0:
+        speedup_wall = sw_elapsed / hw_wall_elapsed
+        uart_write_str("Speedup (software / hw wall): "); uart_write_str(f"{speedup_wall:.2f}x\n")
+    else:
+        uart_write_str("Speedup (software / hw wall): inf\n")
 
     if hw == sw:
         uart_write_str("[OK] Resultado coincide!\n")
