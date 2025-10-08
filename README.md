@@ -79,6 +79,10 @@ pip3 install nome_do_modulo
 
 E continue repetindo o processo até que não haja mais erros do tipo.
 
+(Se assegure de estar baixando essas dependências no ambiente virtual Python, e não no sistema global.)
+
+Caso essas dependências já estejam instaladas no sistema global, pode acontecer de o ambiente virtual não conseguir encontrá-las. Nesse caso, você pode tentar instalar as dependências diretamente no ambiente virtual com o comando acima.
+
 ### 3. Compilar o firmware
 ```sh
 # Assumindo que você já está no diretório /ip
