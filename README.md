@@ -30,19 +30,36 @@ Baixe o oss-cad-suite de acordo com a release compatível com seu sistema operac
 
 Insira o arquivo compactado oss-cad-suite do baixado em `/tools` e realize a extração do conteúdo na mesma pasta.
 
-O `Makefile` na raiz do projeto automatiza as principais tarefas.
+Ou então para baixar por linha de comando:
 
-#### 1. Simular o Acelerador (RTL)
+```sh
+# Acesse o diretório tools
+cd tools
 
-Para verificar a lógica do acelerador de forma isolada:
+# Baixe a versão mais recente do oss-cad-suite (verifique a página de releases para a versão mais atual)
+wget https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2025-10-08/oss-cad-suite-linux-x64-20251008.tgz
+
+# Ainda na mesma pasta, extraia o conteúdo do arquivo baixado
+tar -xvzf oss-cad-suite-linux-x64-20251008.tgz
+```
+
+O `Makefile` na raiz do projeto automatiza o processo de simulação e testbench do acelerador. Para compilar e testar o projeto completo, siga os passos abaixo:
+
+### 1. Simular o Acelerador (RTL)
+
+Caso queira simular o acelerador e obter uma comparação entre a execução em hardware e software, execute:
 
 ```bash
 make sim
 ```
 
-Este comando executa o testbench (`tb/`) e gera um arquivo de ondas (`sim/dot_product_accel.vcd`) para análise.
+Para executar o testbench apenas do acelerador, execute:
 
-#### 2. **Acione o ambiente do OSS CAD SUITE e Gere o SoC com LiteX**
+```bash
+make tb
+```
+
+### 2. Acionar o ambiente do OSS CAD SUITE e Gere o SoC com LiteX
 ```sh
 # Acionar o ambiente do OSS CAD SUITE
 source tools/oss-cad-suite/oss-cad-suite/environment
@@ -62,7 +79,7 @@ pip3 install nome_do_modulo
 
 E continue repetindo o processo até que não haja mais erros do tipo.
 
-#### 3. **Compile o firmware**
+### 3. Compilar o firmware
 ```sh
 # Assumindo que você já está no diretório /ip
 cd ./ip
@@ -80,7 +97,7 @@ make clean
 
 E tente novamente.
 
-#### 4. **Grave o bitstream e o firmware na placa**
+### 4. Gravar o bitstream e o firmware na placa
 Primeiro, execute no terminal o seguinte comando:
 
 ```sh
@@ -97,8 +114,9 @@ cd /ip
 /caminho/descoberto -b colorlight-i5 build/colorlight_i5/gateware/colorlight_i5.bit
 ```
 
-#### 5. **Execute e teste via terminal serial**
-Execute o seguinte comando, e caso não apareça nada, aperte "enter".
+### 5. Executar via terminal serial na placa FPGA
+
+Execute o seguinte comando:
 
 ```sh
 # Abra o terminal serial (verifique a porta correta, pode ser ttyACM0 ou ttyACM1)
@@ -107,11 +125,7 @@ litex_term /dev/ttyACM0 --kernel ../firmware/main.bin
 
 Caso ocorra algum erro com relação a porta, tente mudar para "ttyACM1", ou verifique a porta utilizada no momento em que foi colocado o FPGA no dispositivo.
 
-Após abrir o terminal, aperte "enter" e digite "reboot". Automaticamente o FPGA será reiniciado, e o programa será executado e mostrado no terminal.
-
-O Makefile procura os headers/bibliotecas gerados em `build/dotp/software/include/generated` e produz `ip/firmware.elf` e `ip/firmware.bin`.
-
-Execução: conectar via UART (serial) ao SoC; o firmware imprime os resultados de SW e HW e a verificação `[OK]`.
+Após executar o comando acima aperte "enter" e digite "reboot". Automaticamente o FPGA será reiniciado e o programa será executado e mostrado no terminal.
 
 ### Log de Execução (exemplo esperado)
 
