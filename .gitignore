@@ -85,3 +85,9 @@ cscope.out
 
 tools/oss-cad-suite*
 build
+
+*.d
+
+*.o
+
+*.map

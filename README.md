@@ -47,14 +47,11 @@ Este comando executa o testbench (`tb/`) e gera um arquivo de ondas (`sim/dot_pr
 # Acionar o ambiente do OSS CAD SUITE
 source tools/oss-cad-suite/oss-cad-suite/environment
 
-# Acessar o diretório com a implementação do SoC
-cd ip/
-
 # Busque o caminho do python3
 which python3
 
 # Gerar o SoC
-caminho_do_python3 colorlight_i5.py --board i9 --revision 7.2 --build --cpu-type=picorv32  --ecppack-compress
+caminho_do_python3 ./ip/colorlight_i5.py --board i9 --revision 7.2 --build --cpu-type=picorv32  --ecppack-compress
 ```
 
 Se surgir alguma mensagem do tipo "No module named ...", faça a instalação do módulo faltante no ambiente virtual Python rodando:
@@ -68,7 +65,7 @@ E continue repetindo o processo até que não haja mais erros do tipo.
 #### 3. **Compile o firmware**
 ```sh
 # Assumindo que você já está no diretório /ip
-cd ../ip
+cd ./ip
 
 # Compile o firmware
 make
