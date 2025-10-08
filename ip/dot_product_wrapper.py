@@ -8,7 +8,7 @@ from litex.soc.interconnect.csr import CSRStorage, CSRStatus
 
 
 class DotProductAccel(LiteXModule):
-    def __init__(self, platform, sys_clk_freq):
+    def __init__(self, platform):
         # 16 registradores de entrada (a0..a7, b0..b7), cada um 32-bit
         # Declare como atributos diretos para o gerador de CSRs reconhecer
         self.a0 = CSRStorage(32, name="a0")
