@@ -8,12 +8,12 @@ PYTHON ?= $(shell command -v python3 2>/dev/null || command -v python)
 BOARD ?= i9
 REVISION ?= 7.2
 
-.PHONY: help sim tb
+.PHONY: help sim tb build-soc headers-only
 
 help:
 	@echo "Makefile de alto nível para este projeto"
 	@echo "Targets:"
-	@echo "  sim            - compila e executa o testbench do acelerador (iverilog + vvp)"
+	@echo "  sim            - executa simulação do firmware (python)"
 	@echo "  tb 		 - compila o testbench do acelerador (iverilog)"
 
 sim:
