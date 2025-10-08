@@ -1,27 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 #include <irq.h>
 #include <uart.h>
 #include <console.h>
-#include <stdbool.h>
 #include <generated/csr.h>
 
-#include <stdint.h>
-
-/* If LiteX-generated headers aren't present at build time, keep small
-     stubs for hardware access but do not redefine standard integer/bool
-     types (avoid conflicts with system headers). */
-
-#if 0
-/*
- * Local stubs removed: use LiteX-generated accessors from
- * `generated/csr.h` (dotp_a0_write, dotp_start_write, dotp_done_read, ...).
- * Keeping this block commented out as a reference for manual stubs if
- * you ever need offline testing without the generated headers.
- */
-#endif
 
 static int64_t sw_dotp(const int32_t a[8], const int32_t b[8])
 {
