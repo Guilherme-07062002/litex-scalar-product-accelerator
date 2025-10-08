@@ -18,20 +18,17 @@ O projeto está organizado nos seguintes diretórios principais:
 1.  **Acelerador (`rtl/dot_product_accel.sv`)**: Módulo em SystemVerilog que calcula o produto escalar entre dois vetores de 8 elementos (32-bit signed). A operação leva 8 ciclos de clock e o resultado é um valor de 64 bits.
 2.  **Wrapper LiteX (`ip/dot_product_wrapper.py`)**: Uma classe Python que "envolve" o módulo SystemVerilog, expondo suas portas de entrada e saída como registradores no barramento CSR. É a ponte entre o hardware customizado e o ecossistema LiteX.
 3.  **SoC (`ip/soc_dot_product.py`)**: Script principal que define o SoC, baseado no target `colorlight_i5` do LiteX. Ele instancia a CPU, a memória e mantém os periféricos padrão do target (ex.: LED chaser, SPI flash), adicionando o acelerador de produto escalar como um novo periférico.
-4.  **Firmware (`ip/firmware_dotp.c`)**: Aplicação bare-metal em C que roda na CPU RISC-V. Ele inicializa a comunicação serial, calcula o produto escalar em software, depois usa o acelerador de hardware e, por fim, compara os dois resultados, imprimindo o status no terminal.
+4.  **Firmware (`ip/main.c`)**: Aplicação bare-metal em C que roda na CPU RISC-V. Ele inicializa a comunicação serial, calcula o produto escalar em software, depois usa o acelerador de hardware e, por fim, compara os dois resultados, imprimindo o status no terminal.
 
 ## Como Compilar e Executar
 
 É recomendado utilizar um ambiente virtual Python.
 
-```bash
-# Criar e ativar o ambiente virtual
-python3 -m venv .venv
-source .venv/bin/activate
+Baixe o oss-cad-suite de acordo com a release compatível com seu sistema operacional em:
 
-# Instalar dependências
-pip install litex litex-boards
-```
+[https://github.com/YosysHQ/oss-cad-suite-build/releases](https://github.com/YosysHQ/oss-cad-suite-build/releases)
+
+Insira o arquivo compactado oss-cad-suite do baixado em `/tools` e realize a extração do conteúdo na mesma pasta.
 
 O `Makefile` na raiz do projeto automatiza as principais tarefas.
 
@@ -45,334 +42,77 @@ make sim
 
 Este comando executa o testbench (`tb/`) e gera um arquivo de ondas (`sim/dot_product_accel.vcd`) para análise.
 
-#### 2. Gerar Headers/Libs e Compilar o Firmware
+#### 2. **Acione o ambiente do OSS CAD SUITE e Gere o SoC com LiteX**
+```sh
+# Acionar o ambiente do OSS CAD SUITE
+source tools/oss-cad-suite/oss-cad-suite/environment
 
-Antes de compilar o firmware, é preciso gerar os headers C com o mapa de registradores do SoC:
+# Acessar o diretório com a implementação do SoC
+cd ip/
 
-```bash
-# Gera build/dotp/software/include/generated (csr.h, variables.mak, etc.)
-# e bibliotecas de software do LiteX necessárias para linkar o firmware
-make headers-only
+# Busque o caminho do python3
+which python3
+
+# Gerar o SoC
+caminho_do_python3 colorlight_i5.py --board i9 --revision 7.2 --build --cpu-type=picorv32  --ecppack-compress
 ```
 
-Com os headers gerados, compile o firmware:
+Se surgir alguma mensagem do tipo "No module named ...", faça a instalação do módulo faltante no ambiente virtual Python rodando:
 
-```bash
-# Compila o firmware usando a infraestrutura de software do LiteX
-make -C ip CROSS_COMPILE=../tools/bin/riscv32-unknown-elf- all
+```sh
+pip3 install nome_do_modulo
 ```
 
-#### 3. Simular o Firmware (End-to-End)
+E continue repetindo o processo até que não haja mais erros do tipo.
 
-É possível simular a execução do firmware no SoC sem precisar de uma FPGA. Este teste valida a comunicação entre a CPU e o acelerador:
+Se houver algum erro relacionado ao Yosys, rode o seguinte comando e tente novamente:
 
-```bash
-.venv/bin/python ip/firmware_sim.py
+```sh
+python3 colorlight_i5.py --clean-all
 ```
 
-#### 4. Construir o SoC e Carregar na FPGA (Opcional)
+#### 3. **Compile o firmware**
+```sh
+# Assumindo que você já está no diretório ip
+cd ../ip
 
-Se você tiver a toolchain de FPGA para a ECP5 instalada (Yosys, nextpnr, prjtrellis), pode sintetizar o projeto:
-
-```bash
-# Constrói o gateware (.bit)
-make build-soc
+# Compile o firmware
+make
 ```
 
-Para carregar o bitstream na Colorlight i5 (requer `openFPGALoader`):
+Se houver algum erro, tente executar o comando:
 
-```bash
-# Carrega o bitstream na SRAM da FPGA
-make load
+```sh
+# Limpa arquivos de build anteriores
+make clean
 ```
 
-## Mapa de CSR do Acelerador
+E tente novamente.
 
-A comunicação entre a CPU e o acelerador `dotp` é feita pelos seguintes registradores, mapeados em memória. O endereço base do periférico é `0xf0000000`.
+#### 4. **Grave o bitstream e o firmware na placa**
+Primeiro, execute no terminal o seguinte comando:
 
-| Registrador      | Endereço (Offset) | Acesso | Descrição                               |
-| ---------------- | ----------------- | ------ | ----------------------------------------- |
-| `dotp_a0`        | `0x00`            | RW     | Elemento 0 do vetor A (32 bits)           |
-| ...              | ...               | ...    | ...                                       |
-| `dotp_a7`        | `0x1C`            | RW     | Elemento 7 do vetor A (32 bits)           |
-| `dotp_b0`        | `0x20`            | RW     | Elemento 0 do vetor B (32 bits)           |
-| ...              | ...               | ...    | ...                                       |
-| `dotp_b7`        | `0x3C`            | RW     | Elemento 7 do vetor B (32 bits)           |
-| `dotp_start`     | `0x40`            | RW     | Inicia o cálculo (escrita de 1)           |
-| `dotp_done`      | `0x44`            | RO     | Status; 1 quando o cálculo está pronto    |
-| `dotp_result_lo` | `0x48`            | RO     | 32 bits inferiores do resultado (64 bits) |
-| `dotp_result_hi` | `0x4C`            | RO     | 32 bits superiores do resultado (64 bits) |
-
-## Log de Execução
-
-Há dois modos de obter o log:
-
-1) Simulação (rápido): usando `ip/firmware_sim.py`, que emula os CSRs e imprime o mesmo fluxo do firmware real.
-
-```text
-LiteX Dot-Product Accelerator Demo
-CPU: VexRiscv
-Software: 0xFFFFFFFFFFFFFFF8
-Hardware: 0xFFFFFFFFFFFFFFF8
-[OK] Resultado coincide!
+```sh
+which openFPGALoader
 ```
 
-2) UART real (recomendado para entrega): conecte-se via serial à placa para capturar a saída do firmware.
+Copie o caminho descoberto e execute os próximos passos, colocando o caminho no local indicado. O openFPGALoader é uma ferramenta utilizada para carregar arquivos para o FPGA, e já vem por padrão no OSS CAD Suite.
 
-Exemplo com picocom (Linux):
-
-```bash
-picocom -b 115200 /dev/ttyUSB0 --imap lfcrlf
+```sh
+cd ../litex
+/caminho/descoberto -b colorlight-i5 build/colorlight_i5/gateware/colorlight_i5.bit
 ```
 
-Exemplo com minicom (Linux):
+#### 5. **Execute e teste via terminal serial**
+Execute o seguinte comando, e caso não apareça nada, aperte "enter".
 
-```bash
-minicom -b 115200 -D /dev/ttyUSB0
+```sh
+litex_term /dev/ttyACM0 --kernel ../firmware/main.bin
 ```
 
-Depois de carregar o bitstream e rodar o firmware, copie o texto exibido no terminal e salve como `docs/uart_log.txt` (ou faça um cast no asciinema e inclua o link no README).
+Caso ocorra algum erro com relação a porta, tente mudar para "ttyACM1", ou verifique a porta utilizada no momento em que foi colocado o FPGA no dispositivo.
 
-## Referências
-
--   [LiteX](https://github.com/enjoy-digital/litex)
--   [LiteX Boards](https://github.com/litex-hub/litex-boards)
--   [Building a SoC with LiteX](https://www.controlpaths.com/2022/01/17/building-soc-litex/)
--   [FPGA 101 Workshop](https://github.com/litex-hub/fpga_101)
-
-## Objetivo
-
-Demonstrar a integração de um bloco SV customizado como periférico CSR em um SoC LiteX e compará-lo com a implementação em software via UART.
-
-## Estrutura
-
-```text
-rtl/            Módulos RTL (acelerador de produto escalar)
-tb/             Testbench do acelerador
-sim/            Saída de simulação (VVP, VCD)
-build/          Script de automação (menu)
-doc/            (espaço para relatório/diagramas)
-ip/             Wrapper LiteX, SoC Python e firmware C
-```
-
-## Novo módulo (tarefa 04)
-
-`dot_product_accel.sv` Acelerador de produto escalar 8×32 (signed) → 64 bits, interface com `start/done` e inputs `a0..a7`, `b0..b7`. Implementação sequencial (8 ciclos) e testbench `tb_dot_product_accel.sv` com checagem automática.
-
-## Execução (menu SV)
-
-No Bash:
-
-```bash
-bash build/build.sh
-```
-
-O menu principal traz opções para rodar o testbench do acelerador e abrir ondas. VCD gerado: `sim/dot_product_accel.vcd`.
-
-## Execução Direta (exemplos)
-
-Produto escalar:
-
-```bash
-iverilog -g2012 -o sim/dot_product_accel.vvp rtl/dot_product_accel.sv tb/tb_dot_product_accel.sv && vvp sim/dot_product_accel.vvp
-```
-
-Abrir ondas (se GTKWave instalado):
-
-```bash
-gtkwave sim/dot_product_accel.vcd &
-```
-
-
-## SoC LiteX + Acelerador via CSR
-
-Arquivos principais:
-
-- `ip/dot_product_wrapper.py`: wrapper LiteX/Migen, exporta registradores CSR e instancia `rtl/dot_product_accel.sv`.
-- `ip/soc_dot_product.py`: SoC baseado no target Colorlight i5/i9 (padrão i9 rev 7.2), adiciona o periférico e gera `csr.h` para o firmware. Inclui suporte a gravação de bitstream via `openFPGALoader`/`ecpprog`.
-- `ip/firmware_dotp.c`: firmware em C que escreve os vetores, aciona `start`, espera `done` e lê `result` (comparando com software).
-
-### Como rodar (Makefile)
-
-- Testbench do acelerador (RTL):
-
-```
-make sim
-```
-
-- Gerar apenas os headers/CSRs (sem sintetizar gateware):
-
-```
-make headers-only PYTHON=.venv/bin/python
-```
-
-- Compilar o firmware com a toolchain local do repositório:
-
-```
-make -C ip CROSS_COMPILE=../tools/bin/riscv32-unknown-elf- all
-```
-
-- (Opcional) Construir o SoC e gateware (requer yosys/nextpnr/prjtrellis):
-
-```
-make build-soc PYTHON=.venv/bin/python
-```
-
-- (Opcional) Carregar o bitstream gerado (requer openFPGALoader ou ecpprog):
-
-```
-make load PYTHON=.venv/bin/python
-```
-
-- (Opcional) Simular o firmware end-to-end sem FPGA:
-
-```
-.venv/bin/python ip/firmware_sim.py
-```
-
-### Mapa de CSR
-
-O mapa de registradores do acelerador `dotp` é gerado dinamicamente pelo LiteX. Abaixo está um exemplo do mapa gerado para este projeto, que pode ser encontrado em `build/dotp/csr.csv`.
-
-| Registrador      | Endereço (Offset) | Acesso | Descrição                               |
-| ---------------- | ----------------- | ------ | ----------------------------------------- |
-| `dotp_a0`        | `0x00`            | RW     | Elemento 0 do vetor A (32 bits)           |
-| `dotp_a1`        | `0x04`            | RW     | Elemento 1 do vetor A (32 bits)           |
-| ...              | ...               | ...    | ...                                       |
-| `dotp_a7`        | `0x1C`            | RW     | Elemento 7 do vetor A (32 bits)           |
-| `dotp_b0`        | `0x20`            | RW     | Elemento 0 do vetor B (32 bits)           |
-| ...              | ...               | ...    | ...                                       |
-| `dotp_b7`        | `0x3C`            | RW     | Elemento 7 do vetor B (32 bits)           |
-| `dotp_start`     | `0x40`            | RW     | Inicia o cálculo (escrita de 1)           |
-| `dotp_done`      | `0x44`            | RO     | Status; 1 quando o cálculo está pronto    |
-| `dotp_result_lo` | `0x48`            | RO     | 32 bits inferiores do resultado (64 bits) |
-| `dotp_result_hi` | `0x4C`            | RO     | 32 bits superiores do resultado (64 bits) |
-
-O endereço base do periférico (`csr_base`) é `0xf0000000`.
-
-### Log de Execução
-
-Abaixo, o log de saída esperado no terminal serial ao executar o firmware na placa ou através da simulação (`ip/firmware_sim.py`).
-
-```text
-LiteX Dot-Product Accelerator Demo
-CPU: VexRiscv
-Software: 0xFFFFFFFFFFFFFFF8
-Hardware: 0xFFFFFFFFFFFFFFF8
-[OK] Resultado coincide!
-```
-
-- Python 3.8+
-- LiteX, Migen, toolchain ECP5 (yosys+nextpnr-ecp5+prjtrellis)
-- litex-boards
-
-Instalação (referência oficial):
-
-- <https://github.com/enjoy-digital/litex>
-- <https://github.com/litex-hub/litex-boards>
-
-## Instalação rápida (exemplos)
-
-As instruções a seguir são orientativas — adapte à sua distribuição e preferências. Recomenda-se usar um ambiente virtual Python.
-
-Linux (exemplo, Ubuntu/Debian):
-
-```bash
-# Dependências do sistema (exemplo)
-sudo apt update
-sudo apt install -y build-essential git python3 python3-pip python3-venv \
-	gcc-multilib g++-multilib libffi-dev libssl-dev
-
-# Criar e ativar virtualenv
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Instalar LiteX e litex-boards via pip (modo rápido)
-pip install --upgrade pip
-pip install litex litex-boards
-
-# Instalar toolchain RISC-V (opcional; pode usar toolchains pré-compiladas)
-# Exemplo: riscv32-unknown-elf toolchain via apt (pode não existir em todas distros)
-# Alternativa: baixar pré-compilado em https://github.com/riscv/riscv-gnu-toolchain/releases
-```
-
-Windows (WSL ou Git Bash recomendado):
-
-Use WSL (Ubuntu) para seguir as instruções Linux acima. Em ambientes Windows nativos, instale uma toolchain RISC-V para Windows e garanta que `riscv32-unknown-elf-gcc` esteja no PATH.
-
-ECP5 FPGA toolchain (para síntese/bitstream):
-
-Siga as instruções das ferramentas open-source:
-
-- yosys: https://github.com/YosysHQ/yosys
-- nextpnr (ecp5): https://github.com/YosysHQ/nextpnr
-- prjtrellis: https://github.com/olofk/prjtrellis
-
-Para simplificar, consulte também os guias de instalação do LiteX e litex-boards (links acima).
-
-Instalação rápida (oss-cad-suite) usando script auxiliar:
-
-```
-# Baixe a URL da release mais recente do oss-cad-suite
-./tools/install_ecp5_toolchain.sh https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2024-12-20/oss-cad-suite-linux-x64-20241220.tgz
-# Ative o ambiente
-source tools/oss-cad-suite/environment
-```
-
-### Build do SoC
-
-Um script auxiliar foi adicionado para facilitar o build do SoC e a geração dos headers: `ip/build_soc.py`.
-
-Exemplos (ambiente com LiteX instalado):
-
-```bash
-# Alvo i9 v7.2 (recomendado nas aulas)
-python ip/build_soc.py --board i9 --revision 7.2 --build
-
-# Alternativa chamando diretamente o SoC
-python ip/soc_dot_product.py --board i9 --revision 7.2 --build
-```
-
-Saídas relevantes esperadas:
-
-- `build/dotp/csr.csv` e `build/dotp/software/include/generated/csr.h`
-- Bitstream em `build/dotp/gateware/` (se a síntese for habilitada e as ferramentas estiverem presentes)
-
-Para carregar (quando suportado no ambiente):
-
-Você pode usar o alvo `make load` (que chama `ip/soc_dot_product.py --prog-only`) ou pedir para o script carregar após o build com `--load`. Por padrão, o script tenta detectar o bitstream em `build/dotp/gateware/` e usar `openFPGALoader -b colorlight -f <bit>`. Para usar `ecpprog` ou apontar um bitstream específico:
-
-```
-.venv/bin/python ip/soc_dot_product.py --build --load --loader ecpprog
-.venv/bin/python ip/soc_dot_product.py --prog-only --bitstream build/dotp/gateware/top.bit
-```
-
-Target/revisão (conforme aulas): o padrão é Colorlight i9 rev 7.2. Para mudar:
-
-```bash
-.venv/bin/python ip/soc_dot_product.py --headers-only --board i5 --revision 7.0
-# Para build completo (requer ferramentas FPGA):
-.venv/bin/python ip/soc_dot_product.py --build --board i5 --revision 7.0
-
-Clock padrão do SoC: 50 MHz. Para alterar via CLI:
-
-```bash
-python ip/soc_dot_product.py --board i9 --revision 7.2 --load
-```
-
-Ou para carregar apenas o firmware via terminal do LiteX (ajuste a porta serial):
-
-```bash
-litex_term /dev/ttyUSB0 --kernel ip/firmware.bin
-```
-
-### Compilar/rodar firmware
-
-Após o build do SoC (ou após `make headers-only`), use o Makefile em `ip/` para compilar o firmware. Exemplo:
-
-```bash
-make -C ip CROSS_COMPILE=riscv32-unknown-elf-
-```
+Após abrir o terminal, digite "reboot". Automaticamente o FPGA será reiniciado, e o programa será executado e mostrado no terminal.
 
 O Makefile procura os headers/bibliotecas gerados em `build/dotp/software/include/generated` e produz `ip/firmware.elf` e `ip/firmware.bin`.
 
