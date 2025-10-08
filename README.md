@@ -111,8 +111,8 @@ which openFPGALoader
 Copie o caminho descoberto e execute os próximos passos, colocando o caminho no local indicado. O openFPGALoader é uma ferramenta utilizada para carregar arquivos para o FPGA, e já vem por padrão no OSS CAD Suite.
 
 ```sh
-# Assumindo que você já está no diretório /ip
-cd /ip
+# Assumindo que você já está no diretório ip
+cd ip
 
 # Grave o bitstream na placa
 /caminho/descoberto -b colorlight-i5 build/colorlight_i5/gateware/colorlight_i5.bit
@@ -124,7 +124,7 @@ Execute o seguinte comando:
 
 ```sh
 # Abra o terminal serial (verifique a porta correta, pode ser ttyACM0 ou ttyACM1)
-litex_term /dev/ttyACM0 --kernel ../firmware/main.bin
+litex_term /dev/ttyACM0 --kernel ip/main.bin
 ```
 
 Caso ocorra algum erro com relação a porta, tente mudar para "ttyACM1", ou verifique a porta utilizada no momento em que foi colocado o FPGA no dispositivo.
