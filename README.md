@@ -65,15 +65,9 @@ pip3 install nome_do_modulo
 
 E continue repetindo o processo até que não haja mais erros do tipo.
 
-Se houver algum erro relacionado ao Yosys, rode o seguinte comando e tente novamente:
-
-```sh
-python3 colorlight_i5.py --clean-all
-```
-
 #### 3. **Compile o firmware**
 ```sh
-# Assumindo que você já está no diretório ip
+# Assumindo que você já está no diretório /ip
 cd ../ip
 
 # Compile o firmware
@@ -99,7 +93,10 @@ which openFPGALoader
 Copie o caminho descoberto e execute os próximos passos, colocando o caminho no local indicado. O openFPGALoader é uma ferramenta utilizada para carregar arquivos para o FPGA, e já vem por padrão no OSS CAD Suite.
 
 ```sh
-cd ../litex
+# Assumindo que você já está no diretório /ip
+cd /ip
+
+# Grave o bitstream na placa
 /caminho/descoberto -b colorlight-i5 build/colorlight_i5/gateware/colorlight_i5.bit
 ```
 
@@ -107,25 +104,17 @@ cd ../litex
 Execute o seguinte comando, e caso não apareça nada, aperte "enter".
 
 ```sh
+# Abra o terminal serial (verifique a porta correta, pode ser ttyACM0 ou ttyACM1)
 litex_term /dev/ttyACM0 --kernel ../firmware/main.bin
 ```
 
 Caso ocorra algum erro com relação a porta, tente mudar para "ttyACM1", ou verifique a porta utilizada no momento em que foi colocado o FPGA no dispositivo.
 
-Após abrir o terminal, digite "reboot". Automaticamente o FPGA será reiniciado, e o programa será executado e mostrado no terminal.
+Após abrir o terminal, aperte "enter" e digite "reboot". Automaticamente o FPGA será reiniciado, e o programa será executado e mostrado no terminal.
 
 O Makefile procura os headers/bibliotecas gerados em `build/dotp/software/include/generated` e produz `ip/firmware.elf` e `ip/firmware.bin`.
 
 Execução: conectar via UART (serial) ao SoC; o firmware imprime os resultados de SW e HW e a verificação `[OK]`.
-
-### Gerar/Referenciar a tabela de CSRs
-
-Após o build do SoC, você pode gerar uma tabela Markdown com os CSRs do periférico e referenciá-la na documentação:
-
-```bash
-make csr-table
-cat build/dotp/csr_table.md
-```
 
 ### Log de Execução (exemplo esperado)
 

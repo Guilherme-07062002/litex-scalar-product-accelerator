@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
-
 #include <irq.h>
 #include <uart.h>
 #include <console.h>
