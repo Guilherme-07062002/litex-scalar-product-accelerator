@@ -170,18 +170,15 @@ Caso essas dependências já estejam instaladas no sistema global, pode acontece
 
 ### 3. Compilar o firmware
 ```sh
-# Assumindo que você já está no diretório /ip
-cd ./ip
-
 # Compile o firmware
-make
+make -C ip
 ```
 
 Se houver algum erro, tente executar o comando:
 
 ```sh
 # Limpa arquivos de build anteriores
-make clean
+make -C ip clean
 ```
 
 E tente novamente.
