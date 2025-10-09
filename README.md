@@ -1,8 +1,8 @@
-# Acelerador de Produto Escalar com LiteX e CSR
+# Acelerador de Produto Escalar com LiteX
 
-Este projeto demonstra a criação de um System-on-Chip (SoC) na FPGA Colorlight i5, utilizando o framework LiteX. O SoC integra um processador RISC-V com um acelerador de hardware customizado para cálculo de produto escalar, com o qual o processador se comunica através de um barramento CSR (Control and Status Register).
+Este projeto é um System-on-Chip (SoC) para a FPGA Colorlight i5, construído com o framework LiteX. O SoC contém um processador RISC-V e um acelerador de hardware para cálculo de produto escalar, com o qual a CPU se comunica via barramento CSR (Control and Status Register).
 
-O objetivo é apresentar um caso de uso completo, desde o design do acelerador em SystemVerilog, sua integração ao SoC via Python/Migen, até o desenvolvimento de um firmware em C para validar a operação e comparar o desempenho com uma implementação puramente em software.
+O repositório cobre o fluxo completo: o design do acelerador em SystemVerilog, sua integração ao SoC usando Python/Migen, e um firmware em C que valida o hardware e compara seu desempenho com uma versão em software.
 
 ## Arquitetura do Projeto
 
@@ -148,7 +148,7 @@ Observações sobre formatos numéricos
 
 ```sh
 # Acionar o ambiente do OSS CAD SUITE
-source tools/oss-cad-suite/oss-cad-suite/environment
+source tools/oss-cad-suite/environment
 
 # Busque o caminho do python3
 which python3

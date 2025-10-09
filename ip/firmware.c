@@ -27,22 +27,16 @@ static int64_t sw_dotp(const int32_t a[8], const int32_t b[8])
 
 static void hw_write_vectors(const int32_t a[8], const int32_t b[8])
 {
-    dotprod_a0_write(a[0]);
-    dotprod_a1_write(a[1]);
-    dotprod_a2_write(a[2]);
-    dotprod_a3_write(a[3]);
-    dotprod_a4_write(a[4]);
-    dotprod_a5_write(a[5]);
-    dotprod_a6_write(a[6]);
-    dotprod_a7_write(a[7]);
-    dotprod_b0_write(b[0]);
-    dotprod_b1_write(b[1]);
-    dotprod_b2_write(b[2]);
-    dotprod_b3_write(b[3]);
-    dotprod_b4_write(b[4]);
-    dotprod_b5_write(b[5]);
-    dotprod_b6_write(b[6]);
-    dotprod_b7_write(b[7]);
+    // Acessa os registradores CSR como arrays de 32-bit para simplificar a escrita.
+    // O qualificador 'volatile' garante que o compilador não otimizará os acessos,
+    // forçando a escrita direta no hardware a cada iteração.
+    volatile uint32_t *reg_a = (volatile uint32_t *)CSR_DOTPROD_A0_ADDR;
+    volatile uint32_t *reg_b = (volatile uint32_t *)CSR_DOTPROD_B0_ADDR;
+
+    for (int i = 0; i < 8; i++) {
+        reg_a[i] = a[i];
+        reg_b[i] = b[i];
+    }
 }
 
 static void hw_start(void)
