@@ -46,7 +46,6 @@ build/**/gateware/
 *.bit
 *.svf
 *.rpt
-*.json
 *.asc
 *.fasm
 *.config
@@ -63,7 +62,6 @@ tools/oss-cad-suite/
 tools/bin/
 
 # Editor directories and project files
-.vscode/
 .idea/
 *.iml
 
