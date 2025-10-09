@@ -216,6 +216,33 @@ Caso ocorra algum erro com relação a porta, tente mudar para "ttyACM1", ou ver
 
 Após executar o comando acima aperte "enter" e digite "reboot". Automaticamente o FPGA será reiniciado e o programa será executado e mostrado no terminal.
 
+### 6. Mapa de registradores (CSR)
+
+A comunicação com o acelerador é realizada através dos seguintes registradores CSR, mapeados em memória a partir do endereço base `0x82000000`:
+
+| Registrador           | Endereço     | Tamanho (bits) | Acesso          | Descrição                                         |
+| :-------------------- | :----------- | :------------- | :-------------- | :------------------------------------------------ |
+| `dotprod_a0`          | `0x82000000` | 32             | Escrita/Leitura | Elemento A[0] do vetor de entrada                 |
+| `dotprod_a1`          | `0x82000004` | 32             | Escrita/Leitura | Elemento A[1] do vetor de entrada                 |
+| `dotprod_a2`          | `0x82000008` | 32             | Escrita/Leitura | Elemento A[2] do vetor de entrada                 |
+| `dotprod_a3`          | `0x8200000c` | 32             | Escrita/Leitura | Elemento A[3] do vetor de entrada                 |
+| `dotprod_a4`          | `0x82000010` | 32             | Escrita/Leitura | Elemento A[4] do vetor de entrada                 |
+| `dotprod_a5`          | `0x82000014` | 32             | Escrita/Leitura | Elemento A[5] do vetor de entrada                 |
+| `dotprod_a6`          | `0x82000018` | 32             | Escrita/Leitura | Elemento A[6] do vetor de entrada                 |
+| `dotprod_a7`          | `0x8200001c` | 32             | Escrita/Leitura | Elemento A[7] do vetor de entrada                 |
+| `dotprod_b0`          | `0x82000020` | 32             | Escrita/Leitura | Elemento B[0] do vetor de entrada                 |
+| `dotprod_b1`          | `0x82000024` | 32             | Escrita/Leitura | Elemento B[1] do vetor de entrada                 |
+| `dotprod_b2`          | `0x82000028` | 32             | Escrita/Leitura | Elemento B[2] do vetor de entrada                 |
+| `dotprod_b3`          | `0x8200002c` | 32             | Escrita/Leitura | Elemento B[3] do vetor de entrada                 |
+| `dotprod_b4`          | `0x82000030` | 32             | Escrita/Leitura | Elemento B[4] do vetor de entrada                 |
+| `dotprod_b5`          | `0x82000034` | 32             | Escrita/Leitura | Elemento B[5] do vetor de entrada                 |
+| `dotprod_b6`          | `0x82000038` | 32             | Escrita/Leitura | Elemento B[6] do vetor de entrada                 |
+| `dotprod_b7`          | `0x8200003c` | 32             | Escrita/Leitura | Elemento B[7] do vetor de entrada                 |
+| `dotprod_start`       | `0x82000040` | 1              | Escrita/Leitura | Sinaliza o início do cálculo (escrita com '1')     |
+| `dotprod_done`        | `0x82000044` | 1              | Leitura         | Indica que o cálculo foi concluído (lê '1')       |
+| `dotprod_result_lo`   | `0x82000048` | 32             | Leitura         | Parte baixa (bits 31:0) do resultado de 64 bits   |
+| `dotprod_result_hi`   | `0x8200004c` | 32             | Leitura         | Parte alta (bits 63:32) do resultado de 64 bits   |
+
 ## Referências
 
 - <https://github.com/enjoy-digital/litex>
