@@ -8,7 +8,7 @@ PYTHON ?= $(shell command -v python3 2>/dev/null || command -v python)
 BOARD ?= i9
 REVISION ?= 7.2
 
-.PHONY: help sim tb build-soc headers-only
+.PHONY: help sim tb
 
 help:
 	@echo "Makefile de alto nível para este projeto"

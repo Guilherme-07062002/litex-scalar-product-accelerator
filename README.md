@@ -209,7 +209,7 @@ Execute o seguinte comando:
 
 ```sh
 # Abra o terminal serial (verifique a porta correta, pode ser ttyACM0 ou ttyACM1)
-litex_term /dev/ttyACM0 --kernel ip/main.bin
+litex_term /dev/ttyACM0 --kernel ip/firmware.bin
 ```
 
 Caso ocorra algum erro com relação a porta, tente mudar para "ttyACM1", ou verifique a porta utilizada no momento em que foi colocado o FPGA no dispositivo.
