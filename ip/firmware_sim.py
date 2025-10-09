@@ -32,6 +32,8 @@ class DotProductAccelSim:
         self.a_values = [0] * 8
         self.b_values = [0] * 8
         self.result = 0
+        self.idx = 0
+        self.acc = 0
         
     def tick(self):
         """Simula um ciclo de clock"""
@@ -53,31 +55,38 @@ class DotProductAccelSim:
                 
                 self.state = "COMPUTING"
                 self.cycle_count = 0
+                self.idx = 0
+                self.acc = 0
                 csr_regs['dotp_done'] = 0
                 print(f"🚀 Acelerador iniciou cálculo...")
                 print(f"   A = {self.a_values}")
                 print(f"   B = {self.b_values}")
+                print(f"   Etapas do cálculo (hardware):")
                 
         elif self.state == "COMPUTING":
-            self.cycle_count += 1
-            if self.cycle_count >= 8:  # 8 ciclos para completar
-                # Calcular produto escalar
-                self.result = 0
-                for i in range(8):
-                    self.result += self.a_values[i] * self.b_values[i]
-                
-                # Converter para unsigned 64-bit para representação
+            # Executa 1 multiplicação+acumulação por ciclo
+            if self.idx < 8:
+                a_i = self.a_values[self.idx]
+                b_i = self.b_values[self.idx]
+                prod = a_i * b_i
+                self.acc += prod
+                self.cycle_count += 1
+                print(f"   [c{self.cycle_count:02d}] i={self.idx}: {a_i} * {b_i} = {prod}, acc={self.acc}")
+                self.idx += 1
+
+            if self.idx >= 8:
+                # Finaliza e escreve registradores de saída
+                self.result = self.acc
                 if self.result < 0:
                     result_u64 = (1 << 64) + self.result
                 else:
                     result_u64 = self.result
-                
-                # Dividir em 32-bit low e high
+
                 csr_regs['dotp_result_lo'] = result_u64 & 0xFFFFFFFF
                 csr_regs['dotp_result_hi'] = (result_u64 >> 32) & 0xFFFFFFFF
                 csr_regs['dotp_done'] = 1
                 self.state = "DONE"
-                
+
                 print(f"✅ Cálculo concluído em {self.cycle_count} ciclos")
                 print(f"   Resultado signed: {self.result}")
                 print(f"   result_lo: 0x{csr_regs['dotp_result_lo']:08X}")
@@ -129,11 +138,16 @@ def uart_write_hex32(v):
 def uart_write_hex64(v):
     print(f"0x{v:016X}", end='')
 
-def sw_dotp(a, b):
-    """Implementação software do produto escalar"""
+def sw_dotp(a, b, verbose=False):
+    """Implementação software do produto escalar com opção de log detalhado"""
     acc = 0
+    if verbose:
+        print("   Etapas do cálculo (software):")
     for i in range(8):
-        acc += a[i] * b[i]
+        prod = a[i] * b[i]
+        acc += prod
+        if verbose:
+            print(f"   [s{i+1:02d}] i={i}: {a[i]} * {b[i]} = {prod}, acc={acc}")
     return acc
 
 def hw_write_vectors(a, b):
@@ -186,7 +200,7 @@ def main():
 
     # Software
     sw_start = time.perf_counter()
-    sw = sw_dotp(A, B)
+    sw = sw_dotp(A, B, verbose=True)
     sw_elapsed = time.perf_counter() - sw_start
     uart_write_str("Software: "); uart_write_hex64(sw & 0xFFFFFFFFFFFFFFFF); uart_write_str("\n")
     uart_write_str("Software time (wall): "); uart_write_str(f"{sw_elapsed*1e6:.2f} us\n")
