@@ -8,6 +8,14 @@
 #include <console.h>
 #include <generated/csr.h>
 
+// Protótipos estáticos (evita avisos de protótipo ausente)
+static int64_t sw_dotp(const int32_t a[8], const int32_t b[8]);
+static void    hw_write_vectors(const int32_t a[8], const int32_t b[8]);
+static void    hw_start(void);
+static bool    hw_done(void);
+static int64_t hw_result(void);
+static int     dotp(void);
+
 
 static int64_t sw_dotp(const int32_t a[8], const int32_t b[8])
 {
@@ -37,7 +45,7 @@ static void hw_write_vectors(const int32_t a[8], const int32_t b[8])
     dotprod_b7_write(b[7]);
 }
 
-static void hw_start()
+static void hw_start(void)
 {
     // Gera um pulso em 'start' para evitar reexecuções involuntárias
     // Caso o bit fique em nível alto até o DONE, o hardware poderia reiniciar
@@ -50,21 +58,21 @@ static void hw_start()
     dotprod_start_write(0);
 }
 
-static bool hw_done()
+static bool hw_done(void)
 {
     // Nota: o nome gerado pelo LiteX para leitura de um CSRStatus(1, name="done")
     // normalmente é dotp_done_read(). Ajuste aqui caso seu csr.h gere um nome diferente.
     return dotprod_done_read();
 }
 
-static int64_t hw_result()
+static int64_t hw_result(void)
 {
     uint32_t lo = dotprod_result_lo_read();
     uint32_t hi = dotprod_result_hi_read();
     return ((int64_t)(int32_t)hi << 32) | lo;
 }
 
-int dotp(void)
+static int dotp(void)
 {
     printf("\nLiteX Dot-Product Accelerator Demo\n");
     printf("===================================\n");
