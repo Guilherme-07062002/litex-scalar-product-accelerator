@@ -53,13 +53,98 @@ Caso queira simular o acelerador e obter uma comparação entre a execução em 
 make sim
 ```
 
+#### Log de Execução (exemplo esperado)
+
+```text
+🔄 Inicializando simulação...
+
+LiteX Dot-Product Accelerator Demo
+CPU: VexRiscv (Simulado)
+
+📊 Vetores de teste:
+   A = [1, -2, 3, -4, 5, -6, 7, -8]
+   B = [8, 7, -6, -5, 4, 3, -2, -1]
+   Etapas do cálculo (software):
+   [s01] i=0: 1 * 8 = 8, acc=8
+   [s02] i=1: -2 * 7 = -14, acc=-6
+   [s03] i=2: 3 * -6 = -18, acc=-24
+   [s04] i=3: -4 * -5 = 20, acc=-4
+   [s05] i=4: 5 * 4 = 20, acc=16
+   [s06] i=5: -6 * 3 = -18, acc=-2
+   [s07] i=6: 7 * -2 = -14, acc=-16
+   [s08] i=7: -8 * -1 = 8, acc=-8
+Software: 0xFFFFFFFFFFFFFFF8
+Software time (wall): 44.18 us
+
+⚙️  Executando no acelerador...
+🚀 Acelerador iniciou cálculo...
+   A = [1, -2, 3, -4, 5, -6, 7, -8]
+   B = [8, 7, -6, -5, 4, 3, -2, -1]
+   Etapas do cálculo (hardware):
+   [c01] i=0: 1 * 8 = 8, acc=8
+   [c02] i=1: -2 * 7 = -14, acc=-6
+   [c03] i=2: 3 * -6 = -18, acc=-24
+   [c04] i=3: -4 * -5 = 20, acc=-4
+   [c05] i=4: 5 * 4 = 20, acc=16
+   [c06] i=5: -6 * 3 = -18, acc=-2
+   [c07] i=6: 7 * -2 = -14, acc=-16
+   [c08] i=7: -8 * -1 = 8, acc=-8
+✅ Cálculo concluído em 8 ciclos
+   Resultado signed: -8
+   result_lo: 0xFFFFFFF8
+   result_hi: 0xFFFFFFFF
+Hardware: 0xFFFFFFFFFFFFFFF8
+Hardware cycles: 8
+Hardware time (from cycles): 0.16 us
+Hardware time (wall): 35.76 us
+Speedup (software / hw cycles): 276.11x
+Speedup (software / hw wall): 1.24x
+[OK] Resultado coincide!
+
+🎉 Simulação concluída com sucesso!
+```
+
+### Validação do Resultado com Números Negativos
+
+O log de execução exibe 0xFFFFFFFFFFFFFFF8, um valor que valida a capacidade do acelerador de processar corretamente inteiros com sinal. Este formato hexadecimal é a representação padrão para o número -8 em 64 bits, conhecida como Complemento de Dois (Two's Complement). Nesta notação, o bit mais significativo atua como um sinalizador negativo, o que explica a sequência de Fs no início do valor. A adoção desse padrão é crucial no design de hardware, pois unifica a lógica para operações de soma e subtração, tornando o circuito mais eficiente.
+
+---
+
 Para executar o testbench apenas do acelerador, execute:
 
 ```bash
 make tb
 ```
 
+#### Log de Execução do Testbench (exemplo esperado)
+
+```text
+[OK] seed=1 resultado=3802990229 (0x00000000e2ad0695)
+[OK] seed=42 resultado=4221255804 (0x00000000fb9b407c)
+[OK] seed=2025 resultado=7719476028 (0x00000001cc1ddb3c)
+Todos os testes passaram.
+tb/tb_dot_product_accel.sv:116: $finish called at 375000 (1ps)
+```
+
+Este trecho do log é a saída do testbench (`make tb`) que verifica funcionalmente o módulo RTL do acelerador contra um modelo de referência. Abaixo está o significado das linhas mais importantes:
+
+- `[OK] seed=... resultado=... (0x...)` — para cada seed (semente) usada pelo testbench para gerar vetores de entrada aleatórios, o TB calcula o produto escalar esperado (modelo golden) e compara com a saída do DUT. Se o resultado coincide, o TB imprime `[OK]` seguido da seed e do resultado em decimal e hexadecimal.
+- `Todos os testes passaram.` — indica que todas as seeds testadas produziram o mesmo resultado no DUT e no modelo de referência.
+- `tb/tb_dot_product_accel.sv:116: $finish called at 375000 (1ps)` — é a mensagem do Verilog indicando que o testbench chamou `$finish` na linha 116; o número `375000 (1ps)` é o tempo de simulação no instante do `$finish`. Com a unidade entre parênteses (`1ps`) isso significa 375000 picosegundos, ou seja 375 ns.
+
+Observações sobre formatos numéricos
+
+
+- O testbench imprime o `resultado` em decimal e em hexadecimal para facilitar a inspeção. A representação hexadecimal exibida é a forma natural de visualizar o valor binário completo (64 bits). Para interpretação como inteiro com sinal (two's complement) use a regra:
+
+   - se o valor >= 2^63, então o equivalente signed = valor - 2^64
+   - caso contrário, o valor já é o inteiro signed.
+
+- Nos exemplos acima os resultados têm os 32 bits superiores iguais a zero (0x00000000...), portanto são valores positivos e a interpretação decimal corresponde ao valor signed.
+
+
 ### 2. Acionar o ambiente do OSS CAD SUITE e Gere o SoC com LiteX
+
 ```sh
 # Acionar o ambiente do OSS CAD SUITE
 source tools/oss-cad-suite/oss-cad-suite/environment
@@ -130,18 +215,6 @@ litex_term /dev/ttyACM0 --kernel ip/main.bin
 Caso ocorra algum erro com relação a porta, tente mudar para "ttyACM1", ou verifique a porta utilizada no momento em que foi colocado o FPGA no dispositivo.
 
 Após executar o comando acima aperte "enter" e digite "reboot". Automaticamente o FPGA será reiniciado e o programa será executado e mostrado no terminal.
-
-### Log de Execução (exemplo esperado)
-
-```text
-LiteX Dot-Product Accelerator Demo
-CPU: VexRiscv
-Software: 0xFFFFFFFFFFFFFFF8
-Hardware: 0xFFFFFFFFFFFFFFF8
-[OK] Resultado coincide!
-```
-
-Obs.: os valores dependem dos vetores de teste no firmware. Para pontuar a seção de resultados, inclua um log UART real (texto ou asciinema) da execução do firmware.
 
 ## Referências
 
