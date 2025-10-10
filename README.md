@@ -1,6 +1,6 @@
 # Acelerador de Produto Escalar com LiteX
 
-Este projeto é um System-on-Chip (SoC) para a FPGA Colorlight i5, construído com o framework LiteX. O SoC contém um processador RISC-V e um acelerador de hardware para cálculo de produto escalar, com o qual a CPU se comunica via barramento CSR (Control and Status Register).
+Este projeto é um System-on-Chip (SoC) para a FPGA Colorlight i9, construído com o framework LiteX. O SoC contém um processador RISC-V e um acelerador de hardware para cálculo de produto escalar, com o qual a CPU se comunica via barramento CSR (Control and Status Register).
 
 O repositório cobre o fluxo completo: o design do acelerador em SystemVerilog, sua integração ao SoC usando Python/Migen, e um firmware em C que valida o hardware e compara seu desempenho com uma versão em software.
 
